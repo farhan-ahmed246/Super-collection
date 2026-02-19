@@ -7,7 +7,35 @@ from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from google_auth_oauthlib.flow import Flow
 import requests
+app = Flask(__name__)
+app.secret_key = "super_secure_secret_key_420"
 
+# ================= CONFIG =================
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+CLIENT_SECRETS_FILE = "client_secret.json"
+SCOPES = ["openid", "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/userinfo.profile"]
+
+app = Flask(__name__)
+app.secret_key = "super_secure_secret_key_420"
+
+ADMIN_USERNAME = "fmukhtar420@gmail.com"
+ADMIN_PASSWORD = "blueberry@420"
+ADMIN_EMAIL = "fmukhtar420@gmail.com"
+GMAIL_USER = "fmukhtar420@gmail.com"
+GMAIL_APP_PASSWORD = "bnap lyde xsxm twql"
+
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'webp'}
+
+from werkzeug.utils import secure_filename
+import os
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 PRODUCTS_FILE = "products.json"
 
 # ---------------- PRODUCTS ----------------
