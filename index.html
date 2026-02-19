@@ -5,74 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SuperCollection</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Simple starter CSS agar style.css nahi bana */
-        body {
-            font-family: Arial, sans-serif;
-            background: #f8f8f8;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background: #ff6600;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-        main {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            padding: 20px;
-        }
-        .product {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 5px #ccc;
-            margin: 10px;
-            padding: 10px;
-            width: 200px;
-            text-align: center;
-        }
-        .product img {
-            width: 100%;
-            border-radius: 10px;
-        }
-        .product h3 {
-            margin: 10px 0 5px 0;
-        }
-        .product p {
-            color: #555;
-            font-size: 14px;
-        }
-        .product button {
-            background: #ff6600;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body>
     <header>
         <h1>SuperCollection</h1>
     </header>
-    <main>
-        <!-- Example product -->
-        <div class="product">
-            <img src="https://via.placeholder.com/200" alt="Product 1">
-            <h3>Product 1</h3>
-            <p>Rs 1000</p>
-            <button>Add to Cart</button>
-        </div>
-        <div class="product">
-            <img src="https://via.placeholder.com/200" alt="Product 2">
-            <h3>Product 2</h3>
-            <p>Rs 1500</p>
-            <button>Add to Cart</button>
-        </div>
+    <main id="product-container">
+        <!-- Products will be added by JS -->
     </main>
+
+    <script src="script.js"></script>
 </body>
 </html>
