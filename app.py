@@ -10,13 +10,56 @@ from datetime import datetime, timedelta
 from google_auth_oauthlib.flow import Flow
 import requests
 app = Flask(__name__)
+app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
 
 # ================= CONFIG =================
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-CLIENT_SECRETS_FILE = "client_secret.json"
+CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 SCOPES = ["openid", "https://www.googleapis.com/auth/userinfo.email",
           "https://www.googleapis.com/auth/userinfo.profile"]
 
+# ================= GOOGLE LOGIN =================
+@app.route("/login")
+def login():
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": CLIENT_ID,
+                "client_secret": CLIENT_SECRET,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [url_for('login_callback', _external=True)]
+            }
+        },
+        scopes=SCOPES
+    )
+    auth_url, state = flow.authorization_url()
+    session['state'] = state
+    return redirect(auth_url)
+
+@app.route("/login/callback")
+def login_callback():
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": CLIENT_ID,
+                "client_secret": CLIENT_SECRET,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [url_for('login_callback', _external=True)]
+            }
+        },
+        scopes=SCOPES
+    )
+    flow.fetch_token(authorization_response=request.url)
+    credentials = flow.credentials
+    id_info = requests.get(
+        f"https://www.googleapis.com/oauth2/v3/userinfo?access_token={credentials.token}"
+    ).json()
+    session['user'] = id_info
+    return redirect("/")
 app = Flask(__name__)
 app.secret_key = "super_secure_secret_key_420"
 
