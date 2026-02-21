@@ -1,4 +1,4 @@
-import streamlit as st
+
 from datetime import datetime, timedelta
 from flask import Flask, render_template_string, request, redirect, session, url_for
 from werkzeug.utils import secure_filename
@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 from google_auth_oauthlib.flow import Flow
 import requests
 app = Flask(__name__)
-app.secret_key = "super_secure_secret_key_420"
 
 # ================= CONFIG =================
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
