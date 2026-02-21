@@ -8,6 +8,10 @@ from email.mime.text import MIMEText
 from google_auth_oauthlib.flow import Flow
 import requests
 
+# Your routes yahan
+
+port = int(os.environ.get("PORT", 5000))
+app.run(host="0.0.0.0", port=port)
 # ================= APP CONFIG =================
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
