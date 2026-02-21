@@ -1,4 +1,3 @@
-
 from datetime import datetime, timedelta
 from flask import Flask, render_template_string, request, redirect, session, url_for
 from werkzeug.utils import secure_filename
@@ -6,102 +5,52 @@ import os
 import json
 import smtplib
 from email.mime.text import MIMEText
-from datetime import datetime, timedelta
 from google_auth_oauthlib.flow import Flow
 import requests
-app = Flask(__name__)
+
+# ================= APP CONFIG =================
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
 
-# ================= CONFIG =================
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # for local dev
 CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 SCOPES = ["openid", "https://www.googleapis.com/auth/userinfo.email",
           "https://www.googleapis.com/auth/userinfo.profile"]
 
-# ================= GOOGLE LOGIN =================
-@app.route("/login")
-def login():
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": CLIENT_ID,
-                "client_secret": CLIENT_SECRET,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [url_for('login_callback', _external=True)]
-            }
-        },
-        scopes=SCOPES
-    )
-    auth_url, state = flow.authorization_url()
-    session['state'] = state
-    return redirect(auth_url)
-
-@app.route("/login/callback")
-def login_callback():
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": CLIENT_ID,
-                "client_secret": CLIENT_SECRET,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [url_for('login_callback', _external=True)]
-            }
-        },
-        scopes=SCOPES
-    )
-    flow.fetch_token(authorization_response=request.url)
-    credentials = flow.credentials
-    id_info = requests.get(
-        f"https://www.googleapis.com/oauth2/v3/userinfo?access_token={credentials.token}"
-    ).json()
-    session['user'] = id_info
-    return redirect("/")
-app = Flask(__name__)
-app.secret_key = "super_secure_secret_key_420"
-
-ADMIN_USERNAME = "fmukhtar420@gmail.com"
-ADMIN_PASSWORD = "blueberry@420"
-ADMIN_EMAIL = "fmukhtar420@gmail.com"
-GMAIL_USER = "fmukhtar420@gmail.com"
-GMAIL_APP_PASSWORD = "bnap lyde xsxm twql"
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "fmukhtar420@gmail.com")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "blueberry@420")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "fmukhtar420@gmail.com")
+GMAIL_USER = os.environ.get("GMAIL_USER", "fmukhtar420@gmail.com")
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "bnap lyde xsxm twql")
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'webp'}
 
-from werkzeug.utils import secure_filename
-import os
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
-PRODUCTS_FILE = "products.json"
 
-# ---------------- PRODUCTS ----------------
+PRODUCTS_FILE = "products.json"
+order_history = []
+
+# ---------------- PRODUCTS DATA ----------------
 if os.path.exists(PRODUCTS_FILE):
     with open(PRODUCTS_FILE, "r") as f:
         products = json.load(f)
 else:
     products = [
         {"id": i, "title": f"Super Product {i}", "price": 2850,
-         "description": "Premium Quality Product", "image": "", "ratings": []}
+         "description": "Premium Quality Product", "image": "", "images": [], "ratings": []}
         for i in range(1, 31)
     ]
     with open(PRODUCTS_FILE, "w") as f:
         json.dump(products, f)
 
-order_history = []
-
 def save_products():
     with open(PRODUCTS_FILE, "w") as f:
         json.dump(products, f)
 
-# ---------------- EMAIL ----------------
+# ---------------- EMAIL FUNCTION ----------------
 def send_email(subject, body):
     try:
         msg = MIMEText(body)
@@ -118,10 +67,17 @@ def send_email(subject, body):
 # ---------------- GOOGLE LOGIN ----------------
 @app.route("/login")
 def login():
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri=url_for('login_callback', _external=True)
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": CLIENT_ID,
+                "client_secret": CLIENT_SECRET,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [url_for('login_callback', _external=True)]
+            }
+        },
+        scopes=SCOPES
     )
     auth_url, state = flow.authorization_url()
     session['state'] = state
@@ -129,10 +85,17 @@ def login():
 
 @app.route("/login/callback")
 def login_callback():
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri=url_for('login_callback', _external=True)
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": CLIENT_ID,
+                "client_secret": CLIENT_SECRET,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [url_for('login_callback', _external=True)]
+            }
+        },
+        scopes=SCOPES
     )
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
@@ -142,8 +105,10 @@ def login_callback():
     session['user'] = id_info
     return redirect("/")
 
+# ---------------- HELPER ----------------
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-# ================= HOME =================
 # ================= HOME =================
 @app.route("/", methods=["GET"])
 def home():
@@ -529,6 +494,7 @@ def admin_dashboard():
         .card{border:none;border-radius:15px;transition:0.3s;}
         .card:hover{transform:scale(1.05);box-shadow:0 10px 25px rgba(0,0,0,0.2);}
         .btn-edit{background:linear-gradient(45deg,#ff6600,#ff0000);border:none;color:white;font-weight:bold;}
+        .position-relative{position:relative;}
     </style>
     </head>
     <body>
@@ -540,10 +506,17 @@ def admin_dashboard():
     """
 
     for p in products:
-        img_tag = f"<img src='{p['image']}' style='width:100%;height:150px;object-fit:cover;border-radius:10px;'/>" if p["image"] else ""
+        img_tag = f"<img src='{p['image']}' style='width:100%;height:150px;object-fit:cover;border-radius:10px;'/>" if p.get("image") else ""
         html += f"""
         <div class='col-md-4 mb-4'>
-        <div class='card p-3 text-center'>
+        <div class='card p-3 text-center position-relative'>
+            <!-- Delete Button -->
+            <a href='/delete_product/{p['id']}' 
+               style='position:absolute;top:10px;right:10px;
+                      background:red;color:white;padding:5px 10px;
+                      border-radius:50%;text-decoration:none;font-weight:bold;'>
+               ✖
+            </a>
             {img_tag}
             <h5>{p['title']}</h5>
             <p>{p['description']}</p>
@@ -561,6 +534,16 @@ def admin_dashboard():
     """
     return html
 
+# ================= DELETE PRODUCT =================
+@app.route("/delete_product/<int:pid>")
+def delete_product(pid):
+    if not session.get("admin"):
+        return redirect("/admin")
+    
+    global products
+    products = [p for p in products if p["id"] != pid]
+    save_products()
+    return redirect("/admin_dashboard")
 #
 # ================= ORDER HISTORY =================
 @app.route("/order_history")
@@ -833,9 +816,9 @@ body, html {{
 <a href="/" class="back-btn">⬅ Back</a>
 
 <div class="slider">
-    <button class="arrow left" onclick="prev()">&#10094;</button>
-    <img id="sliderImg" src="{images[0]}">
-    <button class="arrow right" onclick="next()">&#10095;</button>
+   <button class="arrow left" onclick="prev()" id="leftArrow">&#10094;</button>
+<img id="sliderImg" src="{images[0]}">
+<button class="arrow right" onclick="next()" id="rightArrow">&#10095;</button>
 </div>
 
 <script>
@@ -861,5 +844,7 @@ function prev() {{
 </html>
 """
 
+
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
