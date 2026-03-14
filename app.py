@@ -763,6 +763,9 @@ body{background:black;color:white;font-family:sans-serif;}
 </html>
 """, product=product, ramadan_badge_path=ramadan_badge_path)
 
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
