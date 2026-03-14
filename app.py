@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-from flask import Flask, render_template_string, request, redirect, session, url_for
+from datetime import datetime, timedelta, date
+from flask import Flask, render_template_string, request, redirect, session, url_for 
 from werkzeug.utils import secure_filename
 import os
 import json
@@ -8,10 +8,6 @@ from email.mime.text import MIMEText
 from google_auth_oauthlib.flow import Flow
 import requests
 
-# Your routes yahan
-
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
 # ================= APP CONFIG =================
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
@@ -68,174 +64,119 @@ def send_email(subject, body):
     except Exception as e:
         print("Email Error:", e)
 
-# ---------------- GOOGLE LOGIN ----------------
-@app.route("/login")
-def login():
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": CLIENT_ID,
-                "client_secret": CLIENT_SECRET,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [url_for('login_callback', _external=True)]
-            }
-        },
-        scopes=SCOPES
-    )
-    auth_url, state = flow.authorization_url()
-    session['state'] = state
-    return redirect(auth_url)
-
-@app.route("/login/callback")
-def login_callback():
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": CLIENT_ID,
-                "client_secret": CLIENT_SECRET,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [url_for('login_callback', _external=True)]
-            }
-        },
-        scopes=SCOPES
-    )
-    flow.fetch_token(authorization_response=request.url)
-    credentials = flow.credentials
-    id_info = requests.get(
-        f"https://www.googleapis.com/oauth2/v3/userinfo?access_token={credentials.token}"
-    ).json()
-    session['user'] = id_info
-    return redirect("/")
-
-# ---------------- HELPER ----------------
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
 # ================= HOME =================
+# ================= HOME =================
+# ================= HOME =================
+from flask import render_template_string, request, session
+from datetime import datetime
+
 @app.route("/", methods=["GET"])
 def home():
     search = request.args.get("search","").lower()
     filtered = [p for p in products if search in p["title"].lower()]
 
+    banner_path = "static/banner.jpg" if os.path.exists("static/banner.jpg") else "https://static.vecteezy.com/system/resources/previews/021/962/217/non_2x/ramadan-sale-banner-vector.jpg"
+
     html = """
-    <html>
-    <head>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body{background:#f8f9fa;}
-        .brand{
-            font-size:48px;
-            font-weight:900;
-            background:linear-gradient(45deg,#ff0000,#ff6600);
-            -webkit-background-clip:text;
-            -webkit-text-fill-color:transparent;
-        }
-        .card{border:none;border-radius:15px;transition:0.3s;}
-        .card:hover{transform:scale(1.05);box-shadow:0 10px 25px rgba(0,0,0,0.2);}
-        .btn-cart{
-            background:linear-gradient(45deg,#007bff,#00c6ff);
-            border:none;
-            font-size:18px;
-            font-weight:bold;
-        }
-        .icon{width:45px;margin-left:10px;}
+<html>
+<head>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body{background:black;color:white;font-family:sans-serif;}
+.logo-box{text-align:center;margin-bottom:20px;}
+.logo-sc{font-size:90px;font-weight:900;letter-spacing:5px;background:linear-gradient(45deg,#00c6ff,#ff00cc,#ff6600);-webkit-background-clip:text;-webkit-text-fill-color:transparent;position:relative;display:inline-block;}
+.logo-sc:after{content:"⚡";position:absolute;left:50%;transform:translateX(-50%);top:-10px;font-size:100px;color:#ffcc00;text-shadow:0 0 20px #ffcc00;}
+.logo-text{font-size:32px;font-weight:700;margin-top:-10px;letter-spacing:3px;}
+.card{border:none;border-radius:15px;transition:0.3s;background:#111;color:white;}
+.card:hover{transform:scale(1.05);box-shadow:0 10px 25px rgba(255,255,255,0.2);}
+.btn-cart{background:#ff6600;border:none;color:white;padding:10px 20px;font-size:16px;margin-top:10px;border-radius:10px;cursor:pointer;}
+.icon{width:45px;margin:0 10px;filter:invert(1);}
+.product-img{width:100%;height:350px;object-fit:contain;background:#000;border-radius:10px;}
+.search-bar{max-width:400px;margin:0 auto 20px;display:block;}
+.size-btn{border-radius:50%;background:#222;color:white;width:50px;height:50px;margin:5px;border:none;cursor:pointer;}
+a{text-decoration:none;color:white;}
+</style>
+</head>
+<body>
+<div class="container mt-4">
 
-        /* 🔥 IMAGE FIX HERE */
-        .product-img{
-            width:100%;
-            height:350px;
-            object-fit:contain;
-            background:#f8f9fa;
-            border-radius:10px;
-        }
+<!-- ADMIN LOGIN -->
+<div class="d-flex justify-content-end mb-2">
+<a href="/admin" class="btn btn-warning btn-sm">Admin Login</a>
+</div>
 
-        .search-bar{max-width:400px;margin-bottom:20px;}
-        a{text-decoration:none;color:black;}
-    </style>
-    </head>
-    <body>
-    <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="brand">🛍 SUPER COLLECTION</div>
-        <div>
-            <a href="https://www.instagram.com/supercollection6547/" target="_blank">
-                <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon">
-            </a>
-            <a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank">
-                <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon">
-            </a>
-            <a href="/admin" class="btn btn-dark">Admin Login</a>
-            <a href="/order_history" class="btn btn-warning">Orders</a>
-        </div>
-    </div>
+<!-- SC LOGO -->
+<div class="logo-box">
+<div class="logo-sc">SC</div>
+<div class="logo-text">SUPER COLLECTION</div>
+</div>
 
-    <form method="get" class="mt-3">
-        <input type="text" name="search" placeholder="Search Products" class="form-control search-bar">
-        <button class="btn btn-primary mt-2 mb-4">Search</button>
-    </form>
+<!-- SOCIAL ICONS -->
+<div class="mb-3 text-center">
+<a href="https://www.instagram.com/supercollection6547/" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon"></a>
+<a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon"></a>
+<a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon"></a>
+</div>
 
-    <div class="row mt-4">
-    {% for p in filtered %}
-        <div class="col-md-4 mb-4">
-            <div class="card p-3 text-center">
+<!-- SEARCH -->
+<form method="get" class="mt-3">
+<input type="text" name="search" placeholder="🔍 Search Products" class="form-control search-bar">
+</form>
 
-                {% if p.images %}
-                    <a href="/product/{{p.id}}">
-                        <img src="{{p.images[0]}}" class="product-img mb-2">
-                    </a>
-                {% elif p.image %}
-                    <a href="/product/{{p.id}}">
-                        <img src="{{p.image}}" class="product-img mb-2">
-                    </a>
-                {% endif %}
+<!-- BANNER -->
+<img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-4" style="width:100%;height:auto;border-radius:20px;">
 
-                <h5>
-                    <a href="/product/{{p.id}}">{{p.title}}</a>
-                </h5>
-                <p>{{p.description}}</p>
-                <h6 class="text-danger">PKR {{p.price}}</h6>
-                <form action="/add_to_cart/{{p.id}}" method="post">
-                    <input type="number" name="quantity" min="1" value="1" class="form-control mb-2">
-                    <button class="btn btn-cart w-100">Add To Cart</button>
-                </form>
-            </div>
-        </div>
-    {% endfor %}
-    </div>
-    </div>
-    </body>
-    </html>
-    """
-    return render_template_string(html, filtered=filtered)
+{% if not filtered %}
+<h3 class="mt-4 text-center">Not Available ❌</h3>
+{% endif %}
 
-# ================= ADD TO CART =================
-@app.route("/add_to_cart/<int:pid>", methods=["POST"])
-def add_to_cart(pid):
-    session["cart"] = {
-        "pid": pid,
-        "quantity": int(request.form["quantity"])
-    }
-    return redirect("/checkout")
+<div class="row mt-4">
+{% for p in filtered %}
+<div class="col-md-4 mb-4">
+<div class="card p-3 text-center">
+<a href="/product/{{p.id}}">
+<img src="{{p.images[0] if p.images else p.image}}" class="product-img mb-2">
+</a>
+<h5><a href="/product/{{p.id}}">{{p.title}}</a></h5>
+<p>{{p.description}}</p>
+<h6 class="text-danger">PKR {{p.price}}</h6>
 
+<form action="/add_to_cart/{{p.id}}" method="post">
+<input type="hidden" name="quantity" value="1">
+<input type="hidden" name="size" value="N/A">
+<button class="btn-cart w-100">Add To Cart</button>
+</form>
 
-# ================= CHECKOUT =================
-@app.route("/checkout", methods=["GET","POST"])
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+</body>
+</html>
+"""
+    return render_template_string(
+        html,
+        filtered=filtered,
+        banner_url=banner_path,
+        timestamp=datetime.now().timestamp()
+    )
+# ================= SIMPLE CHECKOUT =================
+@app.route("/checkout", methods=["GET", "POST"])
 def checkout():
     if "cart" not in session:
         return redirect("/")
 
     if request.method == "POST":
-        # User input
         name = request.form.get("name")
         age = request.form.get("age")
         gender = request.form.get("gender")
         address = request.form.get("address")
         desc = request.form.get("desc")
         phone = request.form.get("phone")
+        selected_size = request.form.get("size", "N/A")
 
-        # Product lookup safe
+        # Product from cart
         product = next((p for p in products if p["id"] == session["cart"]["pid"]), None)
         if not product:
             return "<h2>Product not found ❌</h2><a href='/'>Back</a>"
@@ -244,16 +185,17 @@ def checkout():
         total_price = quantity * product["price"]
         delivery = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d")
 
-        # Save order
+        # Add order to history
         order_history.append({
             "name": name,
             "product": product["title"],
             "quantity": quantity,
+            "size": selected_size,
             "total": total_price,
             "delivery": delivery
         })
 
-        # Send email
+        # Send email notification (optional)
         send_email(
             "New Order - Super Collection",
             f"""
@@ -261,72 +203,26 @@ Full Name: {name}
 Age: {age}
 Gender: {gender}
 Address: {address}
-Order Description: {desc}
-phone Number: {phone}
-Email: {session.get("user", {}).get("email", "N/A")}
-
+Phone: {phone}
+Email: {session.get("user", {}).get("email","N/A")}
 Product: {product['title']}
 Quantity: {quantity}
+Size: {selected_size}
 Total: PKR {total_price}
 Delivery: {delivery}
 """
         )
 
-        # Animated order confirmation
+        # Confirmation page
         return f"""
 <html>
 <head>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-body {{
-    margin:0;
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background: linear-gradient(-45deg,#ff4b2b,#1e90ff,#ffeb3b,#00c6ff,#ff66c4);
-    background-size: 400% 400%;
-    animation: gradientBG 10s ease infinite;
-    font-family: Arial, sans-serif;
-}}
-@keyframes gradientBG {{
-    0% {{background-position:0% 50%;}}
-    50% {{background-position:100% 50%;}}
-    100% {{background-position:0% 50%;}}
-}}
-.confirm-box {{
-    background:white;
-    padding:25px 30px;
-    border-radius:15px;
-    box-shadow:0 15px 30px rgba(0,0,0,0.3);
-    max-width:350px;
-    text-align:center;
-    animation: fadeIn 1s ease forwards;
-    opacity:0;
-}}
-@keyframes fadeIn {{
-    to {{opacity:1;}}
-}}
-.confirm-box h2 {{
-    font-size:26px;
-    color:green;
-    margin-bottom:12px;
-}}
-.confirm-box p {{
-    font-size:16px;
-    margin:4px 0;
-}}
-.btn-continue {{
-    margin-top:12px;
-    background:linear-gradient(45deg,#007bff,#00c6ff);
-    border:none;
-    color:white;
-    font-weight:bold;
-    font-size:16px;
-    padding:8px 16px;
-    border-radius:8px;
-    text-decoration:none;
-}}
+body{{background:black;color:white;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;}}
+.confirm-box{{background:#111;padding:30px;border-radius:15px;text-align:center;max-width:400px;box-shadow:0 10px 25px rgba(255,255,255,0.2);}}
+h2{{color:#00c6ff;}}
+.btn-continue{{margin-top:15px;padding:10px 20px;border:none;border-radius:8px;background:#007bff;color:white;font-weight:bold;text-decoration:none;}}
 </style>
 </head>
 <body>
@@ -334,6 +230,7 @@ body {{
 <h2>Order Confirmed ✅</h2>
 <p><strong>Product:</strong> {product['title']}</p>
 <p><strong>Quantity:</strong> {quantity}</p>
+<p><strong>Size:</strong> {selected_size}</p>
 <p><strong>Total:</strong> PKR {total_price}</p>
 <p><strong>Delivery:</strong> {delivery}</p>
 <a href="/" class="btn-continue">Continue Shopping</a>
@@ -342,59 +239,69 @@ body {{
 </html>
 """
 
-    # GET method → always return checkout form
+    # GET method → return checkout form
     return """
 <html>
 <head>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-    body{background:linear-gradient(45deg,#ff4b2b,#1e90ff);}
-    .box{max-width:700px;margin:auto;margin-top:50px;padding:40px;border-radius:20px;background:white;}
-    .form-label{font-size:22px;font-weight:bold;color:#ff0000;}
-    .form-control,select,textarea{font-size:20px;padding:12px;}
-    .btn-confirm{background:linear-gradient(45deg,#ff0000,#007bff);border:none;font-size:22px;font-weight:bold;}
+body{background:black;color:white;font-family:sans-serif;}
+.box{max-width:700px;margin:auto;margin-top:30px;padding:30px;border-radius:15px;background:#111;}
+.form-label{font-size:18px;font-weight:bold;}
+.form-control, select, textarea{font-size:16px;padding:10px;background:#222;color:white;border:none;border-radius:5px;}
+.btn-confirm{background:#007bff;border:none;font-size:18px;font-weight:bold;color:white;padding:10px 0;border-radius:10px;margin-top:10px;width:100%;}
+.size-btn{border-radius:50%;background:#222;color:white;width:50px;height:50px;margin:5px;border:none;cursor:pointer;}
+.size-btn.selected{background:#007bff;}
 </style>
+<script>
+function selectSize(btn){
+    let buttons=document.getElementsByClassName('size-btn');
+    for(let b of buttons){b.classList.remove('selected');}
+    btn.classList.add('selected');
+    document.getElementById('size_input').value=btn.innerText;
+}
+</script>
 </head>
 <body>
-<div class="text-center mt-3">
-    <a href="/" class="btn btn-dark btn-lg">⬅ Continue Shopping</a>
-</div>
-<div class="box shadow">
-<h2 class="text-center mb-4" style="font-size:35px;color:#007bff;font-weight:bold;">Checkout Details</h2>
+<div class="box">
+<h2 class="text-center mb-3">Checkout</h2>
 <form method="post">
     <label class="form-label">Full Name</label>
-    <input name="name" class="form-control mb-3" required>
+    <input name="name" class="form-control mb-2" required>
 
     <label class="form-label">Age</label>
-    <input name="age" type="number" class="form-control mb-3" required>
+    <input name="age" type="number" class="form-control mb-2" required>
 
     <label class="form-label">Gender</label>
-    <select name="gender" class="form-control mb-3">
+    <select name="gender" class="form-control mb-2">
+        <option>Male</option>
         <option>Female</option>
-
     </select>
 
     <label class="form-label">Address</label>
-    <textarea name="address" class="form-control mb-3" required></textarea>
+    <textarea name="address" class="form-control mb-2" required></textarea>
 
     <label class="form-label">Phone Number</label>
-        <input name="phone" class="form-control mb-3" required>
-
-    <label class="form-label">Email</label>
-    <input name="email" type="email" class="form-control mb-3" required>    
+    <input name="phone" class="form-control mb-2" required>
 
     <label class="form-label">Order Description</label>
-    <textarea name="desc" class="form-control mb-4" rows="4"></textarea>
+    <textarea name="desc" class="form-control mb-2"></textarea>
 
+    <label class="form-label">Select Size</label><br>
+    <button type="button" class="size-btn" onclick="selectSize(this)">S</button>
+    <button type="button" class="size-btn" onclick="selectSize(this)">M</button>
+    <button type="button" class="size-btn" onclick="selectSize(this)">L</button>
+    <button type="button" class="size-btn" onclick="selectSize(this)">XL</button>
+    <button type="button" class="size-btn" onclick="selectSize(this)">XXL</button>
+    <input type="hidden" id="size_input" name="size" value="">
 
-    <button class="btn btn-confirm w-100">Confirm Order</button>
+    <button class="btn-confirm">Confirm Order</button>
 </form>
+<br><a href="/" class="btn btn-dark w-100">⬅ Continue Shopping</a>
 </div>
 </body>
 </html>
 """
-
-
 
 # ================= ADMIN LOGIN =================
 @app.route("/admin", methods=["GET","POST"])
@@ -484,71 +391,118 @@ body {{
 """
 
 # ================= ADMIN DASHBOARD =================
-@app.route("/admin_dashboard")
+# ================= ADMIN DASHBOARD =================
+@app.route("/admin_dashboard", methods=["GET","POST"])
 def admin_dashboard():
     if not session.get("admin"):
         return redirect("/admin")
 
+    # Handle uploads
+    if request.method == "POST":
+        # Homepage banner
+        if "banner" in request.files:
+            file = request.files["banner"]
+            if file.filename:
+                path = os.path.join("static", "banner.jpg")
+                file.save(path)
+        # Ramadan badge
+        if "ramadan_badge" in request.files:
+            file = request.files["ramadan_badge"]
+            if file.filename:
+                path = os.path.join("static", "ramadan_badge.png")
+                file.save(path)
+
+    # Check if files exist
+    banner_exists = os.path.exists("static/banner.jpg")
+    ramadan_exists = os.path.exists("static/ramadan_badge.png")
+
     html = """
-    <html>
-    <head>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body{background:#f8f9fa;}
-        .card{border:none;border-radius:15px;transition:0.3s;}
-        .card:hover{transform:scale(1.05);box-shadow:0 10px 25px rgba(0,0,0,0.2);}
-        .btn-edit{background:linear-gradient(45deg,#ff6600,#ff0000);border:none;color:white;font-weight:bold;}
-        .position-relative{position:relative;}
-    </style>
-    </head>
-    <body>
-    <div class="container mt-4">
-    <h2>Admin Dashboard</h2>
-    <a href="/" class="btn btn-dark mb-3">Home</a>
-    <a href="/add_product" class="btn btn-success mb-3">➕ Add Product</a>
-    <div class="row">
-    """
+<html>
+<head>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body{background:#f8f9fa;}
+.card{border:none;border-radius:15px;transition:0.3s;}
+.card:hover{transform:scale(1.05);box-shadow:0 10px 25px rgba(0,0,0,0.2);}
+.btn-edit{background:linear-gradient(45deg,#ff6600,#ff0000);border:none;color:white;font-weight:bold;}
+.position-relative{position:relative;}
+.banner-upload{margin-bottom:20px;padding:15px;background:#222;color:white;border-radius:10px;}
+.circle-banner{border-radius:50%;width:80px;height:80px;object-fit:cover;margin:5px;}
+.delete-btn{position:absolute;top:-5px;right:-5px;background:red;color:white;border-radius:50%;padding:3px 6px;text-decoration:none;font-weight:bold;}
+</style>
+</head>
+<body>
+<div class="container mt-4">
+<h2>Admin Dashboard</h2>
+<a href="/" class="btn btn-dark mb-3">Home</a>
+<a href="/add_product" class="btn btn-success mb-3">➕ Add Product</a>
 
-    for p in products:
-        img_tag = f"<img src='{p['image']}' style='width:100%;height:150px;object-fit:cover;border-radius:10px;'/>" if p.get("image") else ""
-        html += f"""
-        <div class='col-md-4 mb-4'>
-        <div class='card p-3 text-center position-relative'>
-            <!-- Delete Button -->
-            <a href='/delete_product/{p['id']}' 
-               style='position:absolute;top:10px;right:10px;
-                      background:red;color:white;padding:5px 10px;
-                      border-radius:50%;text-decoration:none;font-weight:bold;'>
-               ✖
-            </a>
-            {img_tag}
-            <h5>{p['title']}</h5>
-            <p>{p['description']}</p>
-            <h6>PKR {p['price']}</h6>
-            <a href='/edit/{p['id']}' class='btn btn-edit mt-2 w-100'>⚙️ Edit Product</a>
-        </div>
-        </div>
-        """
+<!-- Banner Upload Form -->
+<div class="banner-upload">
+<h5>Upload Homepage Banner</h5>
+<form method="post" enctype="multipart/form-data">
+    <input type="file" name="banner" class="form-control mb-2" required>
+    <button class="btn btn-primary w-100">Upload Banner</button>
+</form>
+{% if banner_exists %}
+<div style="position:relative;display:inline-block;margin-top:10px;">
+    <img src="{{ url_for('static', filename='banner.jpg') }}" class="circle-banner">
+    <a href="/delete_banner" class="delete-btn">❌</a>
+</div>
+{% endif %}
 
-    html += """
-    </div>
-    </div>
-    </body>
-    </html>
-    """
-    return html
+<h5 class="mt-3">Upload Ramadan Badge</h5>
+<form method="post" enctype="multipart/form-data">
+    <input type="file" name="ramadan_badge" class="form-control mb-2" required>
+    <button class="btn btn-primary w-100">Upload Badge</button>
+</form>
+{% if ramadan_exists %}
+<div style="position:relative;display:inline-block;margin-top:10px;">
+    <img src="{{ url_for('static', filename='ramadan_badge.png') }}" class="circle-banner">
+    <a href="/delete_ramadan_badge" class="delete-btn">❌</a>
+</div>
+{% endif %}
+</div>
 
-# ================= DELETE PRODUCT =================
-@app.route("/delete_product/<int:pid>")
-def delete_product(pid):
+<div class="row mt-4">
+{% for p in products %}
+<div class='col-md-4 mb-4'>
+<div class='card p-3 text-center position-relative'>
+<a href='/delete_product/{{p.id}}' class='delete-btn'>✖</a>
+{% if p.image %}<img src='{{p.image}}' style='width:100%;height:150px;object-fit:cover;border-radius:10px;'>{% endif %}
+<h5>{{p.title}}</h5>
+<p>{{p.description}}</p>
+<h6>PKR {{p.price}}</h6>
+<a href='/edit/{{p.id}}' class='btn btn-edit mt-2 w-100'>⚙️ Edit Product</a>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+</body>
+</html>
+"""
+    return render_template_string(html, banner_exists=banner_exists, ramadan_exists=ramadan_exists, products=products)
+
+# ---------------- Delete Banner ----------------
+@app.route("/delete_banner")
+def delete_banner():
     if not session.get("admin"):
         return redirect("/admin")
-    
-    global products
-    products = [p for p in products if p["id"] != pid]
-    save_products()
+    path = "static/banner.jpg"
+    if os.path.exists(path):
+        os.remove(path)
     return redirect("/admin_dashboard")
-#
+
+# ---------------- Delete Ramadan Badge ----------------
+@app.route("/delete_ramadan_badge")
+def delete_ramadan_badge():
+    if not session.get("admin"):
+        return redirect("/admin")
+    path = "static/ramadan_badge.png"
+    if os.path.exists(path):
+        os.remove(path)
+    return redirect("/admin_dashboard")
 # ================= ORDER HISTORY =================
 @app.route("/order_history")
 def order_history_page():
@@ -736,118 +690,78 @@ def delete_image(pid):
         save_products()
 
     return redirect("/edit/" + str(pid))
-
-#==================product detail=================
-@app.route("/product/<pid>")
-def product_detail(pid):
-    try:
-        pid = int(pid)
-    except:
-        return "<h2>Invalid Product ID ❌</h2><a href='/'>Back</a>"
-
-    product = next((p for p in products if int(p.get("id", 0)) == pid), None)
+# ================= ADD TO CART =================
+@app.route("/add_to_cart/<int:pid>", methods=["GET","POST"])
+def add_to_cart(pid):
+    product = next((p for p in products if p["id"] == pid), None)
     if not product:
         return "<h2>Product not found ❌</h2><a href='/'>Back</a>"
 
-    # Ab images ka slider
-    images = product.get("images")
-    if not images:
-        if product.get("image"):
-            images = [product["image"]]
-        else:
-            images = ["https://via.placeholder.com/800x1200?text=No+Image"]
+    # Quantity and size from GET parameters
+    quantity = int(request.args.get("quantity", 1))
+    size = request.args.get("size", "N/A")
 
-    images_js = str(images)
+    # Store in session cart
+    session["cart"] = {
+        "pid": pid,
+        "quantity": quantity,
+        "size": size
+    }
 
-    return f"""
+    return redirect("/checkout")
+# Product Detail Route
+@app.route("/product/<int:pid>", methods=["GET","POST"])
+def product_detail(pid):
+    product = next((p for p in products if p["id"] == pid), None)
+    if not product:
+        return "<h2>Product not found ❌</h2><a href='/'>Back</a>"
+
+    # Ramadan badge path
+    ramadan_badge_path = "static/ramadan_badge.png" if os.path.exists("static/ramadan_badge.png") else None
+
+    return render_template_string("""
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-body, html {{
-    margin:0;
-    padding:0;
-    height:100%;
-    overflow:hidden;
-    background:black;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}}
-.slider {{
-    position:relative;
-    width:100%;
-    height:100%;
-}}
-.slider img {{
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    background:black;
-}}
-.arrow {{
+body{background:black;color:white;font-family:sans-serif;}
+.container{max-width:900px;margin:auto;padding:20px;}
+.product-img{width:100%;height:400px;object-fit:contain;background:#000;border-radius:10px;position:relative;}
+.btn-cart{background:#ff6600;border:none;color:white;padding:10px 20px;font-size:16px;margin-top:10px;border-radius:10px;cursor:pointer;}
+.badge-ramadan{
+    width:60px;
+    height:60px;
+    border-radius:50%;
     position:absolute;
-    top:50%;
-    transform:translateY(-50%);
-    font-size:60px;
-    background:rgba(0,0,0,0.5);
-    color:white;
-    border:none;
-    padding:10px 25px;
-    cursor:pointer;
+    top:10px;
+    left:10px;
     z-index:10;
-    border-radius:8px;
-}}
-.left {{left:20px;}}
-.right {{right:20px;}}
-.back-btn {{
-    position:absolute;
-    top:20px;
-    left:20px;
-    font-size:20px;
-    padding:8px 15px;
-    background:rgba(255,255,255,0.8);
-    text-decoration:none;
-    color:black;
-    border-radius:8px;
-    z-index:10;
-}}
+    border:2px solid #fff;
+    background:#fff;
+    object-fit:cover;
+}
 </style>
 </head>
 <body>
-
-<a href="/" class="back-btn">⬅ Back</a>
-
-<div class="slider">
-   <button class="arrow left" onclick="prev()" id="leftArrow">&#10094;</button>
-<img id="sliderImg" src="{images[0]}">
-<button class="arrow right" onclick="next()" id="rightArrow">&#10095;</button>
+<div class="container">
+<h2>{{product['title']}}</h2>
+<div style="position:relative;">
+    <img src="{{product.images[0] if product.images else product.image}}" class="product-img">
+    {% if ramadan_badge_path %}
+        <img src="{{ url_for('static', filename='ramadan_badge.png') }}" class="badge-ramadan">
+    {% endif %}
 </div>
-
-<script>
-let images = {images_js};
-let index = 0;
-
-function show() {{
-    document.getElementById("sliderImg").src = images[index];
-}}
-
-function next() {{
-    index = (index + 1) % images.length;
-    show();
-}}
-
-function prev() {{
-    index = (index - 1 + images.length) % images.length;
-    show();
-}}
-</script>
-
+<p>{{product['description']}}</p>
+<h4>PKR {{product['price']}}</h4>
+<form action="/add_to_cart/{{product['id']}}" method="get">
+<input type="number" name="quantity" value="1" min="1" class="form-control mb-2" style="max-width:100px;">
+<button class="btn-cart">Add To Cart</button>
+</form>
+<a href="/" class="btn btn-dark mt-3">⬅ Back</a>
+</div>
 </body>
 </html>
-"""
-
+""", product=product, ramadan_badge_path=ramadan_badge_path)
 
 
 if __name__ == "__main__":
