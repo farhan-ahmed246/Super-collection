@@ -74,30 +74,6 @@ from flask import render_template_string, request, session
 from datetime import datetime
 @app.route("/", methods=["GET"])
 def home():
-    user = session.get("user")
-    if not user:
-        return """
-        <html>
-        <head>
-            <style>
-                body { margin:0; height:100vh; display:flex; justify-content:center; align-items:center; background:black; }
-                .panel { background:white; padding:50px; border-radius:20px; text-align:center; }
-                button { padding:15px 30px; font-size:20px; cursor:pointer; border:none; border-radius:10px; background:#ff6600; color:white; font-weight:bold; }
-            </style>
-        </head>
-        <body>
-            <div class="panel">
-             <button onclick="window.location.href='/login'">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" style="margin-right:8px;">
-    Login with Google
-</button>
-            </div>
-        </body>
-        </html>
-        """
-
-@app.route("/2/", methods=["GET"])
-def home2():
     search = request.args.get("search","").lower()
     filtered = [p for p in products if search in p["title"].lower()]
 
