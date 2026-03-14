@@ -8,6 +8,8 @@ from email.mime.text import MIMEText
 from google_auth_oauthlib.flow import Flow
 import requests
 
+# ================= LOAD .ENV =================
+load_dotenv()  # ye .env file ko read karega
 # ================= APP CONFIG =================
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
@@ -63,6 +65,7 @@ def send_email(subject, body):
         server.quit()
     except Exception as e:
         print("Email Error:", e)
+
 
 # ================= HOME =================
 # ================= HOME =================
