@@ -93,7 +93,7 @@ def home():
         </html>
         """
 
-@app.route("2/", methods=["GET"])
+@app.route("/2/", methods=["GET"])
 def home2():
     search = request.args.get("search","").lower()
     filtered = [p for p in products if search in p["title"].lower()]
