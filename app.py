@@ -111,15 +111,24 @@ a{text-decoration:none;color:white;}
 <div class="logo-text">SUPER COLLECTION</div>
 </div>
 
-<!-- SOCIAL ICONS -->
 <div class="mb-3 text-center">
-<a href="https://www.instagram.com/supercollection6547/" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon"></a>
-<a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon"></a>
-<a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon"></a>
-<a href="https://wa.me/923363016943" target="_blank" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width: 24px; height: 24px;">
-    <span>0336 3016943</span>
+
+<a href="https://www.instagram.com/supercollection6547/" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon">
 </a>
+
+<a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon">
+</a>
+
+<a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon">
+</a>
+
+<a href="https://wa.me/923363016943" target="_blank">
+<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon">
+</a>
+
 </div>
 
 <!-- SEARCH -->
