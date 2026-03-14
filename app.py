@@ -84,8 +84,10 @@ def home2():
         </head>
         <body>
             <div class="panel">
-                <h2>Login with Google</h2>
-                <button onclick="window.location.href='/login'">Login</button>
+             <button onclick="window.location.href='/login'">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" style="margin-right:8px;">
+    Login with Google
+</button>
             </div>
         </body>
         </html>
