@@ -69,8 +69,8 @@ def send_email(subject, body):
 # ================= HOME =================
 from flask import render_template_string, request, session
 from datetime import datetime
-@app.route("2/", methods=["GET"])
-def home2():
+@app.route("/", methods=["GET"])
+def home():
     user = session.get("user")
     if not user:
         return """
@@ -93,8 +93,8 @@ def home2():
         </html>
         """
 
-@app.route("/", methods=["GET"])
-def home():
+@app.route("2/", methods=["GET"])
+def home2():
     search = request.args.get("search","").lower()
     filtered = [p for p in products if search in p["title"].lower()]
 
