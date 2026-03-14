@@ -767,5 +767,12 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=False)
 
 
+# ================= APP RUN =================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+    try:
+        from waitress import serve
+        # Waitress production server
+        serve(app, host="0.0.0.0", port=5000)
+    except ImportError:
+        # Agar Waitress installed na ho to fallback to Flask dev server
+        app.run(host="0.0.0.0", port=5000, debug=False)
