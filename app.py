@@ -8,17 +8,12 @@ from email.mime.text import MIMEText
 from google_auth_oauthlib.flow import Flow
 import requests
 
-# ================= LOAD .ENV =================
-load_dotenv()  # ye .env file ko read karega
+
 # ================= APP CONFIG =================
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
 
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # for local dev
-CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
-CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-SCOPES = ["openid", "https://www.googleapis.com/auth/userinfo.email",
-          "https://www.googleapis.com/auth/userinfo.profile"]
+
 
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "fmukhtar420@gmail.com")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "blueberry@420")
