@@ -69,6 +69,27 @@ def send_email(subject, body):
 # ================= HOME =================
 from flask import render_template_string, request, session
 from datetime import datetime
+@app.route("2/", methods=["GET"])
+def home2():
+    user = session.get("user")
+    if not user:
+        return """
+        <html>
+        <head>
+            <style>
+                body { margin:0; height:100vh; display:flex; justify-content:center; align-items:center; background:black; }
+                .panel { background:white; padding:50px; border-radius:20px; text-align:center; }
+                button { padding:15px 30px; font-size:20px; cursor:pointer; border:none; border-radius:10px; background:#ff6600; color:white; font-weight:bold; }
+            </style>
+        </head>
+        <body>
+            <div class="panel">
+                <h2>Login with Google</h2>
+                <button onclick="window.location.href='/login'">Login</button>
+            </div>
+        </body>
+        </html>
+        """
 
 @app.route("/", methods=["GET"])
 def home():
@@ -174,6 +195,8 @@ a{text-decoration:none;color:white;}
         banner_url=banner_path,
         timestamp=datetime.now().timestamp()
     )
+
+
 # ================= SIMPLE CHECKOUT =================
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
