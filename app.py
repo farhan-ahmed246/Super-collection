@@ -59,7 +59,67 @@ def send_email(subject, body):
         server.quit()
     except Exception as e:
         print("Email Error:", e)
+# =============== GOOGLE OAUTH CONFIG =================
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # HTTP testing; remove in production
+GOOGLE_CLIENT_SECRETS_FILE = "client_secret.json"
+SCOPES = ["https://www.googleapis.com/auth/userinfo.profile",
+          "https://www.googleapis.com/auth/userinfo.email",
+          "openid"]
 
+REDIRECT_URI = "https://super-collection-production-f4cb.up.railway.app/oauth2callback"  # Your deployed URL
+
+# ================== LOGIN ROUTE ==================
+@app.route("/login")
+def login():
+    flow = Flow.from_client_secrets_file(
+        GOOGLE_CLIENT_SECRETS_FILE,
+        scopes=SCOPES,
+        redirect_uri=REDIRECT_URI
+    )
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true'
+    )
+    session['state'] = state
+    return redirect(authorization_url)
+
+# ================== CALLBACK ROUTE ==================
+@app.route("/oauth2callback")
+def oauth2callback():
+    state = session.get('state')
+    if not state:
+        return "Session expired. Please try login again."
+
+    flow = Flow.from_client_secrets_file(
+        GOOGLE_CLIENT_SECRETS_FILE,
+        scopes=SCOPES,
+        state=state,
+        redirect_uri=REDIRECT_URI
+    )
+    flow.fetch_token(authorization_response=request.url)
+    credentials = flow.credentials
+
+    request_session = google.auth.transport.requests.Request()
+    id_info = id_token.verify_oauth2_token(
+        credentials._id_token,
+        request_session,
+        audience=flow.client_config['client_id']
+    )
+
+    # Save user info in session
+    session["user"] = {
+        "name": id_info.get("name"),
+        "email": id_info.get("email"),
+        "picture": id_info.get("picture")
+    }
+
+    return redirect("/")
+
+# ================== LOGOUT ROUTE ==================
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    return redirect("/")
 
 # ================= HOME =================
 # ================= HOME =================
@@ -151,18 +211,8 @@ body{font-family:sans-serif;margin:0;padding:0;background:black;color:white;}
     html += "</div></body></html>"
     return render_template_string(html)
 
-# ================= GOOGLE LOGIN SIMULATION =================
-@app.route("/login")
-def login():
-    # Placeholder for Google OAuth
-    session["user"] = {"name":"Farhan","email":"farhan@example.com"}
-    return redirect("/")
 
-# ================= LOGOUT =================
-@app.route("/logout")
-def logout():
-    session.pop("user", None)
-    return redirect("/")
+
 # ================= SIMPLE CHECKOUT =================
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
