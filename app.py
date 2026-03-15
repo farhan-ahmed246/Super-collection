@@ -64,33 +64,38 @@ def send_email(subject, body):
 # ================= HOME =================
 # ================= HOME =================
 # ================= HOME PAGE =================
-@app.route("/", methods=["GET"])
+@app.route("/")
 def home():
-    search = request.args.get("search","").lower()
-    filtered = [p for p in products if search in p["title"].lower()]
-
-    banner_path = "static/banner.jpg" if os.path.exists("static/banner.jpg") else "https://static.vecteezy.com/system/resources/previews/021/962/217/non_2x/ramadan-sale-banner-vector.jpg"
-
+    user = session.get("user")
     html = """
 <html>
 <head>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-body{background:black;color:white;font-family:sans-serif;}
-.logo-box{text-align:center;margin-bottom:20px;}
-.logo-sc{font-size:90px;font-weight:900;letter-spacing:5px;background:linear-gradient(45deg,#00c6ff,#ff00cc,#ff6600);-webkit-background-clip:text;-webkit-text-fill-color:transparent;position:relative;display:inline-block;}
-.logo-sc:after{content:"⚡";position:absolute;left:50%;transform:translateX(-50%);top:-10px;font-size:100px;color:#ffcc00;text-shadow:0 0 20px #ffcc00;}
-.logo-text{font-size:32px;font-weight:700;margin-top:-10px;letter-spacing:3px;}
-.card{border:none;border-radius:15px;transition:0.3s;background:#111;color:white;}
-.card:hover{transform:scale(1.05);box-shadow:0 10px 25px rgba(255,255,255,0.2);}
-.btn-cart{background:#ff6600;border:none;color:white;padding:10px 20px;font-size:16px;margin-top:10px;border-radius:10px;cursor:pointer;}
-.icon{width:45px;margin:0 10px;filter:invert(1);}
-.product-img{width:100%;height:350px;object-fit:contain;background:#000;border-radius:10px;}
-.search-bar{max-width:400px;margin:0 auto 20px;display:block;}
-.size-btn{border-radius:50%;background:#222;color:white;width:50px;height:50px;margin:5px;border:none;cursor:pointer;}
-a{text-decoration:none;color:white;}
+body{font-family:sans-serif;margin:0;padding:0;background:black;color:white;}
+.container{max-width:1200px;margin:auto;padding:20px;}
 
-/* GOOGLE LOGIN BUTTON */
+/* PANEL WITH ANIMATED BACKGROUND */
+.login-panel{
+    max-width:400px;
+    margin:30px auto;
+    padding:30px;
+    border-radius:15px;
+    text-align:center;
+    background: linear-gradient(270deg,#ff0000,#00ff00,#0000ff,#ff00ff);
+    background-size:800% 800%;
+    animation: gradientBG 8s ease infinite;
+    box-shadow:0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* ANIMATION KEYFRAMES */
+@keyframes gradientBG{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+/* GOOGLE BUTTON */
 .google-btn{
     display:inline-flex;
     align-items:center;
@@ -98,102 +103,73 @@ a{text-decoration:none;color:white;}
     padding:10px 20px;
     border-radius:8px;
     text-decoration:none;
-    font-family:Arial;
     font-weight:600;
     color:white;
-    background:linear-gradient(270deg,#4285F4,#34A853,#FBBC05,#EA4335);
+    background: linear-gradient(270deg,#4285F4,#34A853,#FBBC05,#EA4335);
     background-size:800% 800%;
     animation:googleColor 6s ease infinite;
     transition:transform 0.2s;
 }
 .google-btn:hover{transform:scale(1.05);}
-.google-icon{width:20px;height:20px;}
+.google-icon{width:24px;height:24px;}
 @keyframes googleColor{
     0%{background-position:0% 50%;}
     50%{background-position:100% 50%;}
     100%{background-position:0% 50%;}
 }
+
+/* PRODUCT CARDS */
+.card{background:#111;border:none;border-radius:15px;margin-bottom:20px;}
+.card:hover{transform:scale(1.05);box-shadow:0 10px 25px rgba(255,255,255,0.2);}
+.product-img{width:100%;height:200px;object-fit:contain;background:#000;border-radius:10px;}
 </style>
 </head>
 <body>
-<div class="container mt-4">
-<!-- GOOGLE LOGIN -->
-<div class="login-area text-center mb-3">
-<a href="/login" class="google-btn">
-    <img src="https://developers.google.com/identity/images/g-logo.png" class="google-icon">
-    <span>Login with Google</span>
-</a>
-</div>
-
-<!-- ADMIN LOGIN -->
-<div class="d-flex justify-content-end mb-2">
-<a href="/admin" class="btn btn-warning btn-sm">Admin Login</a>
-</div>
-
-<!-- SC LOGO -->
-<div class="logo-box">
-<div class="logo-sc">SC</div>
-<div class="logo-text">SUPER COLLECTION</div>
-</div>
-
-<div class="mb-3 text-center">
-<a href="https://www.instagram.com/supercollection6547/" target="_blank">
-<img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon"></a>
-<a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank">
-<img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon"></a>
-<a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank">
-<img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon"></a>
-<a href="https://wa.me/923363016943" target="_blank">
-<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon"></a>
-</div>
-
-<!-- SEARCH -->
-<form method="get" class="mt-3">
-<input type="text" name="search" placeholder="🔍 Search Products" class="form-control search-bar">
-</form>
-
-<!-- BANNER -->
-<img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-4" style="width:100%;height:auto;border-radius:20px;">
-
-{% if not filtered %}<h3 class="mt-4 text-center">Not Available ❌</h3>{% endif %}
-
-<div class="row mt-4">
-{% for p in filtered %}
-<div class="col-md-4 mb-4">
-<div class="card p-3 text-center">
-<a href="/product/{{p.id}}">
-<img src="{{p.images[0] if p.images else p.image}}" class="product-img mb-2"></a>
-<h5><a href="/product/{{p.id}}">{{p.title}}</a></h5>
-<p>{{p.description}}</p>
-<h6 class="text-danger">PKR {{p.price}}</h6>
-
-<form action="/add_to_cart/{{p.id}}" method="post">
-<input type="hidden" name="quantity" value="1">
-<input type="hidden" name="size" value="N/A">
-<button class="btn-cart w-100">Add To Cart</button>
-</form>
-
-</div>
-</div>
-{% endfor %}
-</div>
-</div>
-</body>
-</html>
+<div class="container">
 """
-    return render_template_string(html,
-        filtered=filtered,
-        banner_url=banner_path,
-        timestamp=datetime.now().timestamp()
-    )
 
-# ================= GOOGLE LOGIN PLACEHOLDER =================
+# Show login panel only if user not logged in
+if not user:
+    html += """
+    <div class="login-panel">
+        <h3>Login to Super Collection</h3>
+        <a href="/login" class="google-btn">
+            <img src="https://developers.google.com/identity/images/g-logo.png" class="google-icon">
+            <span>Login with Google</span>
+        </a>
+    </div>
+    """
+else:
+    html += f"<h4>Welcome, {user['name']}!</h4>"
+
+# Products display (always visible after login)
+html += '<div class="row">'
+for p in products:
+    html += f"""
+    <div class="col-md-4">
+        <div class="card p-2 text-center">
+            <img src="{p['image']}" class="product-img mb-2">
+            <h5>{p['title']}</h5>
+            <p>{p['description']}</p>
+            <h6>PKR {p['price']}</h6>
+        </div>
+    </div>
+    """
+html += "</div></div></body></html>"
+
+return render_template_string(html)
+
+# ================= GOOGLE LOGIN SIMULATION =================
 @app.route("/login")
 def login():
-    # Placeholder for Google Login
-    # Tum actual OAuth 2.0 code yahan integrate kar sakte ho
-    # For now just simulate login
-    session["user"] = {"name":"Test User","email":"test@example.com"}
+    # Placeholder for Google OAuth
+    session["user"] = {"name":"Farhan","email":"farhan@example.com"}
+    return redirect("/")
+
+# ================= LOGOUT =================
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
     return redirect("/")
 # ================= SIMPLE CHECKOUT =================
 @app.route("/checkout", methods=["GET", "POST"])
