@@ -63,9 +63,7 @@ def send_email(subject, body):
 
 # ================= HOME =================
 # ================= HOME =================
-# ================= HOME =================
-from flask import render_template_string, request, session
-from datetime import datetime
+# ================= HOME PAGE =================
 @app.route("/", methods=["GET"])
 def home():
     search = request.args.get("search","").lower()
@@ -91,16 +89,42 @@ body{background:black;color:white;font-family:sans-serif;}
 .search-bar{max-width:400px;margin:0 auto 20px;display:block;}
 .size-btn{border-radius:50%;background:#222;color:white;width:50px;height:50px;margin:5px;border:none;cursor:pointer;}
 a{text-decoration:none;color:white;}
+
+/* GOOGLE LOGIN BUTTON */
+.google-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 20px;
+    border-radius:8px;
+    text-decoration:none;
+    font-family:Arial;
+    font-weight:600;
+    color:white;
+    background:linear-gradient(270deg,#4285F4,#34A853,#FBBC05,#EA4335);
+    background-size:800% 800%;
+    animation:googleColor 6s ease infinite;
+    transition:transform 0.2s;
+}
+.google-btn:hover{transform:scale(1.05);}
+.google-icon{width:20px;height:20px;}
+@keyframes googleColor{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
 </style>
 </head>
 <body>
 <div class="container mt-4">
-<div class="login-area">
+<!-- GOOGLE LOGIN -->
+<div class="login-area text-center mb-3">
 <a href="/login" class="google-btn">
     <img src="https://developers.google.com/identity/images/g-logo.png" class="google-icon">
     <span>Login with Google</span>
 </a>
 </div>
+
 <!-- ADMIN LOGIN -->
 <div class="d-flex justify-content-end mb-2">
 <a href="/admin" class="btn btn-warning btn-sm">Admin Login</a>
@@ -113,23 +137,14 @@ a{text-decoration:none;color:white;}
 </div>
 
 <div class="mb-3 text-center">
-
 <a href="https://www.instagram.com/supercollection6547/" target="_blank">
-<img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon">
-</a>
-
+<img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon"></a>
 <a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank">
-<img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon">
-</a>
-
+<img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon"></a>
 <a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank">
-<img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon">
-</a>
-
+<img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon"></a>
 <a href="https://wa.me/923363016943" target="_blank">
-<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon">
-</a>
-
+<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon"></a>
 </div>
 
 <!-- SEARCH -->
@@ -140,17 +155,14 @@ a{text-decoration:none;color:white;}
 <!-- BANNER -->
 <img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-4" style="width:100%;height:auto;border-radius:20px;">
 
-{% if not filtered %}
-<h3 class="mt-4 text-center">Not Available ❌</h3>
-{% endif %}
+{% if not filtered %}<h3 class="mt-4 text-center">Not Available ❌</h3>{% endif %}
 
 <div class="row mt-4">
 {% for p in filtered %}
 <div class="col-md-4 mb-4">
 <div class="card p-3 text-center">
 <a href="/product/{{p.id}}">
-<img src="{{p.images[0] if p.images else p.image}}" class="product-img mb-2">
-</a>
+<img src="{{p.images[0] if p.images else p.image}}" class="product-img mb-2"></a>
 <h5><a href="/product/{{p.id}}">{{p.title}}</a></h5>
 <p>{{p.description}}</p>
 <h6 class="text-danger">PKR {{p.price}}</h6>
@@ -169,14 +181,20 @@ a{text-decoration:none;color:white;}
 </body>
 </html>
 """
-    return render_template_string(
-        html,
+    return render_template_string(html,
         filtered=filtered,
         banner_url=banner_path,
         timestamp=datetime.now().timestamp()
     )
 
-
+# ================= GOOGLE LOGIN PLACEHOLDER =================
+@app.route("/login")
+def login():
+    # Placeholder for Google Login
+    # Tum actual OAuth 2.0 code yahan integrate kar sakte ho
+    # For now just simulate login
+    session["user"] = {"name":"Test User","email":"test@example.com"}
+    return redirect("/")
 # ================= SIMPLE CHECKOUT =================
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
