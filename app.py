@@ -95,7 +95,12 @@ a{text-decoration:none;color:white;}
 </head>
 <body>
 <div class="container mt-4">
-
+<div class="login-area">
+<a href="/login" class="google-btn">
+    <img src="https://developers.google.com/identity/images/g-logo.png" class="google-icon">
+    <span>Login with Google</span>
+</a>
+</div>
 <!-- ADMIN LOGIN -->
 <div class="d-flex justify-content-end mb-2">
 <a href="/admin" class="btn btn-warning btn-sm">Admin Login</a>
