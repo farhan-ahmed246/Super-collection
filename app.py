@@ -128,36 +128,28 @@ body{font-family:sans-serif;margin:0;padding:0;background:black;color:white;}
 <div class="container">
 """
 
-# Show login panel only if user not logged in
-if not user:
-    html += """
-    <div class="login-panel">
-        <h3>Login to Super Collection</h3>
-        <a href="/login" class="google-btn">
-            <img src="https://developers.google.com/identity/images/g-logo.png" class="google-icon">
-            <span>Login with Google</span>
-        </a>
-    </div>
-    """
-else:
-    html += f"<h4>Welcome, {user['name']}!</h4>"
 
-# Products display (always visible after login)
-html += '<div class="row">'
-for p in products:
-    html += f"""
-    <div class="col-md-4">
-        <div class="card p-2 text-center">
-            <img src="{p['image']}" class="product-img mb-2">
-            <h5>{p['title']}</h5>
-            <p>{p['description']}</p>
-            <h6>PKR {p['price']}</h6>
+    if not user:
+        html += """
+        <div class="login-panel">
+            <h3>Login to Super Collection</h3>
+            <a href="/login" class="google-btn">
+                <img src="https://developers.google.com/identity/images/g-logo.png" class="google-icon">
+                <span>Login with Google</span>
+            </a>
         </div>
-    </div>
-    """
-html += "</div></div></body></html>"
-
-return render_template_string(html)
+        """
+    else:
+        html += f"""
+        <div class="text-center mb-4">
+            <h4>Welcome, {user['name']}!</h4>
+            <p>{user['email']}</p>
+            <img src="{user.get('picture')}" width="80" style="border-radius:50%;">
+            <br><br><a href="/logout" class="btn btn-danger">Logout</a>
+        </div>
+        """
+    html += "</div></body></html>"
+    return render_template_string(html)
 
 # ================= GOOGLE LOGIN SIMULATION =================
 @app.route("/login")
