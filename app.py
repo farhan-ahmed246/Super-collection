@@ -5,7 +5,9 @@ import os
 import json
 import smtplib
 from email.mime.text import MIMEText
-
+from google_auth_oauthlib.flow import Flow
+from google.oauth2 import id_token
+import google.auth.transport.requests
 
 
 # ================= APP CONFIG =================
