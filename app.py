@@ -6,14 +6,11 @@ import json
 import smtplib
 from email.mime.text import MIMEText
 from google_auth_oauthlib.flow import Flow
-from google.oauth2 import id_token
-import google.auth.transport.requests
-
+import requests
 
 # ================= APP CONFIG =================
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
-
 
 
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "fmukhtar420@gmail.com")
@@ -61,164 +58,117 @@ def send_email(subject, body):
         server.quit()
     except Exception as e:
         print("Email Error:", e)
-# =============== GOOGLE OAUTH CONFIG =================
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # HTTP testing; remove in production
-GOOGLE_CLIENT_SECRETS_FILE = "client_secret.json"
-SCOPES = ["https://www.googleapis.com/auth/userinfo.profile",
-          "https://www.googleapis.com/auth/userinfo.email",
-          "openid"]
-
-REDIRECT_URI = "https://super-collection-production-f4cb.up.railway.app/oauth2callback"  # Your deployed URL
-
-# ================== LOGIN ROUTE ==================
-@app.route("/login")
-def login():
-    flow = Flow.from_client_secrets_file(
-        GOOGLE_CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
-    )
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true'
-    )
-    session['state'] = state
-    return redirect(authorization_url)
-
-# ================== CALLBACK ROUTE ==================
-@app.route("/oauth2callback")
-def oauth2callback():
-    state = session.get('state')
-    if not state:
-        return "Session expired. Please try login again."
-
-    flow = Flow.from_client_secrets_file(
-        GOOGLE_CLIENT_SECRETS_FILE,
-        scopes=SCOPES,
-        state=state,
-        redirect_uri=REDIRECT_URI
-    )
-    flow.fetch_token(authorization_response=request.url)
-    credentials = flow.credentials
-
-    # ✅ Token verification with try-except
-    request_session = google.auth.transport.requests.Request()
-    try:
-        id_info = id_token.verify_oauth2_token(
-            credentials._id_token,
-            request_session,
-            audience=flow.client_config['client_id']
-        )
-    except Exception as e:
-        print("Google Login Error:", e)
-        return f"Login failed: {e}"
-
-    # Save user info in session
-    session["user"] = {
-        "name": id_info.get("name"),
-        "email": id_info.get("email"),
-        "picture": id_info.get("picture")
-    }
-
-    return redirect("/")
-# ================== LOGOUT ROUTE ==================
-@app.route("/logout")
-def logout():
-    session.pop("user", None)
-    return redirect("/")
 
 # ================= HOME =================
 # ================= HOME =================
-# ================= HOME PAGE =================
-@app.route("/")
+# ================= HOME =================
+from flask import render_template_string, request, session
+from datetime import datetime
+
+@app.route("/", methods=["GET"])
 def home():
-    user = session.get("user")
+    search = request.args.get("search","").lower()
+    filtered = [p for p in products if search in p["title"].lower()]
+
+    banner_path = "static/banner.jpg" if os.path.exists("static/banner.jpg") else "https://static.vecteezy.com/system/resources/previews/021/962/217/non_2x/ramadan-sale-banner-vector.jpg"
+
     html = """
 <html>
 <head>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-body{font-family:sans-serif;margin:0;padding:0;background:black;color:white;}
-.container{max-width:1200px;margin:auto;padding:20px;}
-
-/* PANEL WITH ANIMATED BACKGROUND */
-.login-panel{
-    max-width:400px;
-    margin:30px auto;
-    padding:30px;
-    border-radius:15px;
-    text-align:center;
-    background: linear-gradient(270deg,#ff0000,#00ff00,#0000ff,#ff00ff);
-    background-size:800% 800%;
-    animation: gradientBG 8s ease infinite;
-    box-shadow:0 10px 25px rgba(0,0,0,0.5);
-}
-
-/* ANIMATION KEYFRAMES */
-@keyframes gradientBG{
-    0%{background-position:0% 50%;}
-    50%{background-position:100% 50%;}
-    100%{background-position:0% 50%;}
-}
-
-/* GOOGLE BUTTON */
-.google-btn{
-    display:inline-flex;
-    align-items:center;
-    gap:10px;
-    padding:10px 20px;
-    border-radius:8px;
-    text-decoration:none;
-    font-weight:600;
-    color:white;
-    background: linear-gradient(270deg,#4285F4,#34A853,#FBBC05,#EA4335);
-    background-size:800% 800%;
-    animation:googleColor 6s ease infinite;
-    transition:transform 0.2s;
-}
-.google-btn:hover{transform:scale(1.05);}
-.google-icon{width:24px;height:24px;}
-@keyframes googleColor{
-    0%{background-position:0% 50%;}
-    50%{background-position:100% 50%;}
-    100%{background-position:0% 50%;}
-}
-
-/* PRODUCT CARDS */
-.card{background:#111;border:none;border-radius:15px;margin-bottom:20px;}
+body{background:black;color:white;font-family:sans-serif;}
+.logo-box{text-align:center;margin-bottom:20px;}
+.logo-sc{font-size:90px;font-weight:900;letter-spacing:5px;background:linear-gradient(45deg,#00c6ff,#ff00cc,#ff6600);-webkit-background-clip:text;-webkit-text-fill-color:transparent;position:relative;display:inline-block;}
+.logo-sc:after{content:"⚡";position:absolute;left:50%;transform:translateX(-50%);top:-10px;font-size:100px;color:#ffcc00;text-shadow:0 0 20px #ffcc00;}
+.logo-text{font-size:32px;font-weight:700;margin-top:-10px;letter-spacing:3px;}
+.card{border:none;border-radius:15px;transition:0.3s;background:#111;color:white;}
 .card:hover{transform:scale(1.05);box-shadow:0 10px 25px rgba(255,255,255,0.2);}
-.product-img{width:100%;height:200px;object-fit:contain;background:#000;border-radius:10px;}
+.btn-cart{background:#ff6600;border:none;color:white;padding:10px 20px;font-size:16px;margin-top:10px;border-radius:10px;cursor:pointer;}
+.icon{width:45px;margin:0 10px;filter:invert(1);}
+.product-img{width:100%;height:350px;object-fit:contain;background:#000;border-radius:10px;}
+.search-bar{max-width:400px;margin:0 auto 20px;display:block;}
+.size-btn{border-radius:50%;background:#222;color:white;width:50px;height:50px;margin:5px;border:none;cursor:pointer;}
+a{text-decoration:none;color:white;}
 </style>
 </head>
 <body>
-<div class="container">
+<div class="container mt-4">
+
+<!-- ADMIN LOGIN -->
+<div class="d-flex justify-content-end mb-2">
+<a href="/admin" class="btn btn-warning btn-sm">Admin Login</a>
+</div>
+
+<!-- SC LOGO -->
+<div class="logo-box">
+<div class="logo-sc">SC</div>
+<div class="logo-text">SUPER COLLECTION</div>
+</div>
+
+<div class="mb-3 text-center">
+
+<a href="https://www.instagram.com/supercollection6547/" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon">
+</a>
+
+<a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon">
+</a>
+
+<a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon">
+</a>
+
+<a href="https://wa.me/923363016943" target="_blank">
+<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon">
+</a>
+
+</div>
+
+<!-- SEARCH -->
+<form method="get" class="mt-3">
+<input type="text" name="search" placeholder="🔍 Search Products" class="form-control search-bar">
+</form>
+
+<!-- BANNER -->
+<img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-4" style="width:100%;height:auto;border-radius:20px;">
+
+{% if not filtered %}
+<h3 class="mt-4 text-center">Not Available ❌</h3>
+{% endif %}
+
+<div class="row mt-4">
+{% for p in filtered %}
+<div class="col-md-4 mb-4">
+<div class="card p-3 text-center">
+<a href="/product/{{p.id}}">
+<img src="{{p.images[0] if p.images else p.image}}" class="product-img mb-2">
+</a>
+<h5><a href="/product/{{p.id}}">{{p.title}}</a></h5>
+<p>{{p.description}}</p>
+<h6 class="text-danger">PKR {{p.price}}</h6>
+
+<form action="/add_to_cart/{{p.id}}" method="post">
+<input type="hidden" name="quantity" value="1">
+<input type="hidden" name="size" value="N/A">
+<button class="btn-cart w-100">Add To Cart</button>
+</form>
+
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+</body>
+</html>
 """
-
-
-    if not user:
-        html += """
-        <div class="login-panel">
-            <h3>Login to Super Collection</h3>
-            <a href="/login" class="google-btn">
-                <img src="https://developers.google.com/identity/images/g-logo.png" class="google-icon">
-                <span>Login with Google</span>
-            </a>
-        </div>
-        """
-    else:
-        html += f"""
-        <div class="text-center mb-4">
-            <h4>Welcome, {user['name']}!</h4>
-            <p>{user['email']}</p>
-            <img src="{user.get('picture')}" width="80" style="border-radius:50%;">
-            <br><br><a href="/logout" class="btn btn-danger">Logout</a>
-        </div>
-        """
-    html += "</div></body></html>"
-    return render_template_string(html)
-
-
-
+    return render_template_string(
+        html,
+        filtered=filtered,
+        banner_url=banner_path,
+        timestamp=datetime.now().timestamp()
+    )
 # ================= SIMPLE CHECKOUT =================
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
@@ -371,10 +321,10 @@ def admin():
 
             session["admin"] = True
 
-            #send_email(
-                #"Admin Login Alert - Super Collection",
-                #f"Admin logged in at {datetime.now()}"
-            #)
+            send_email(
+                "Admin Login Alert - Super Collection",
+                f"Admin logged in at {datetime.now()}"
+            )
 
             return redirect("/admin_dashboard")
         else:
@@ -774,7 +724,6 @@ def product_detail(pid):
     if not product:
         return "<h2>Product not found ❌</h2><a href='/'>Back</a>"
 
-    # Ramadan badge path
     ramadan_badge_path = "static/ramadan_badge.png" if os.path.exists("static/ramadan_badge.png") else None
 
     return render_template_string("""
@@ -795,7 +744,6 @@ body{background:black;color:white;font-family:sans-serif;}
     left:10px;
     z-index:10;
     border:2px solid #fff;
-    background:#fff;
     object-fit:cover;
 }
 </style>
@@ -803,12 +751,31 @@ body{background:black;color:white;font-family:sans-serif;}
 <body>
 <div class="container">
 <h2>{{product['title']}}</h2>
-<div style="position:relative;">
-    <img src="{{product.images[0] if product.images else product.image}}" class="product-img">
-    {% if ramadan_badge_path %}
-        <img src="{{ url_for('static', filename='ramadan_badge.png') }}" class="badge-ramadan">
-    {% endif %}
+
+<div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel" style="position:relative;">
+  <div class="carousel-inner">
+    {% set images = product['images'] if product['images'] else [product['image']] %}
+    {% for img in images %}
+    <div class="carousel-item {% if loop.first %}active{% endif %}">
+      <img src="{{img}}" class="d-block w-100 product-img">
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if images|length > 1 %}
+  <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+  </button>
+  {% endif %}
+
+  {% if ramadan_badge_path %}
+    <img src="{{ url_for('static', filename='ramadan_badge.png') }}" class="badge-ramadan">
+  {% endif %}
 </div>
+
 <p>{{product['description']}}</p>
 <h4>PKR {{product['price']}}</h4>
 <form action="/add_to_cart/{{product['id']}}" method="get">
@@ -816,6 +783,8 @@ body{background:black;color:white;font-family:sans-serif;}
 <button class="btn-cart">Add To Cart</button>
 </form>
 <a href="/" class="btn btn-dark mt-3">⬅ Back</a>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </div>
 </body>
 </html>
@@ -823,6 +792,7 @@ body{background:black;color:white;font-family:sans-serif;}
 
 
 
-
+# ================= APP RUN =================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
