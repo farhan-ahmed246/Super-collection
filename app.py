@@ -101,12 +101,17 @@ def oauth2callback():
     flow.fetch_token(authorization_response=request.url)
     credentials = flow.credentials
 
+    # ✅ Token verification with try-except
     request_session = google.auth.transport.requests.Request()
-    id_info = id_token.verify_oauth2_token(
-        credentials._id_token,
-        request_session,
-        audience=flow.client_config['client_id']
-    )
+    try:
+        id_info = id_token.verify_oauth2_token(
+            credentials._id_token,
+            request_session,
+            audience=flow.client_config['client_id']
+        )
+    except Exception as e:
+        print("Google Login Error:", e)
+        return f"Login failed: {e}"
 
     # Save user info in session
     session["user"] = {
@@ -116,7 +121,6 @@ def oauth2callback():
     }
 
     return redirect("/")
-
 # ================== LOGOUT ROUTE ==================
 @app.route("/logout")
 def logout():
