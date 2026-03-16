@@ -98,6 +98,7 @@ def home():
     filtered = [p for p in products if search in p["title"].lower()]
 
     banner_path = "static/banner.jpg" if os.path.exists("static/banner.jpg") else "https://static.vecteezy.com/system/resources/previews/021/962/217/non_2x/ramadan-sale-banner-vector.jpg"
+    ramadan_badge_exists = os.path.exists("static/ramadan_badge.png")
 
     html = """
 <html>
@@ -117,6 +118,14 @@ body{background:black;color:white;font-family:sans-serif;}
 .search-bar{max-width:400px;margin:0 auto 20px;display:block;}
 .size-btn{border-radius:50%;background:#222;color:white;width:50px;height:50px;margin:5px;border:none;cursor:pointer;}
 a{text-decoration:none;color:white;}
+.badge-ramadan-home{
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    display:block;
+    margin:10px auto;
+    border:2px solid #fff;
+}
 </style>
 </head>
 <body>
@@ -125,11 +134,7 @@ a{text-decoration:none;color:white;}
 <!-- ADMIN LOGIN -->
 <div class="d-flex justify-content-end mb-2">
 <a href="/admin" class="btn btn-warning btn-sm">⚙️Admin Login</a>
-
-<a href="/order_history" class="btn btn-info btn-sm">
-📦 Order History
-</a>
-
+<a href="/order_history" class="btn btn-info btn-sm">📦 Order History</a>
 </div>
 
 <!-- SC LOGO -->
@@ -138,24 +143,20 @@ a{text-decoration:none;color:white;}
 <div class="logo-text">SUPER COLLECTION</div>
 </div>
 
+<!-- SOCIAL ICONS -->
 <div class="mb-3 text-center">
-
 <a href="https://www.instagram.com/supercollection6547/" target="_blank">
 <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon">
 </a>
-
 <a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank">
 <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon">
 </a>
-
 <a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank">
 <img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon">
 </a>
-
 <a href="https://wa.me/923363016943" target="_blank">
 <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon">
 </a>
-
 </div>
 
 <!-- SEARCH -->
@@ -164,7 +165,12 @@ a{text-decoration:none;color:white;}
 </form>
 
 <!-- BANNER -->
-<img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-4" style="width:100%;height:auto;border-radius:20px;">
+<img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-2" style="width:100%;height:auto;border-radius:20px;">
+
+<!-- RAMADAN BADGE -->
+{% if ramadan_badge_exists %}
+<img src="{{ url_for('static', filename='ramadan_badge.png') }}" class="badge-ramadan-home">
+{% endif %}
 
 {% if not filtered %}
 <h3 class="mt-4 text-center">Not Available ❌</h3>
@@ -199,6 +205,7 @@ a{text-decoration:none;color:white;}
         html,
         filtered=filtered,
         banner_url=banner_path,
+        ramadan_badge_exists=ramadan_badge_exists,
         timestamp=datetime.now().timestamp()
     )
 # ================= SIMPLE CHECKOUT =================
