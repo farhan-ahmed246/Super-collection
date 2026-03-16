@@ -133,8 +133,6 @@ a{text-decoration:none;color:white;}
 <!-- ADMIN LOGIN -->
 <div class="d-flex justify-content-end mb-2">
 <a href="/admin" class="btn btn-warning btn-sm">⚙️Admin Login</a>
-<a href="/order_history" class="btn btn-info btn-sm">📦 Order History</a>
-</div>
 
 <!-- SC LOGO -->
 <div class="logo-box">
