@@ -14,6 +14,7 @@ import requests
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
 
+# Admin / Gmail config
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "fmukhtar420@gmail.com")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "blueberry@420")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "fmukhtar420@gmail.com")
@@ -22,32 +23,28 @@ GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "yopk vlmm yjtt rulq")
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'webp'}
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
-
-# ================= ORDERS FILE =================
+# ================= DATA FILES =================
 ORDERS_FILE = "orders.json"
+PRODUCTS_FILE = "products.json"
+
+# Load orders
 if os.path.exists(ORDERS_FILE):
     try:
         with open(ORDERS_FILE, "r") as f:
             order_history = json.load(f)
-    except json.JSONDecodeError:
+    except:
         order_history = []
 else:
     order_history = []
 
-def save_orders():
-    with open(ORDERS_FILE, "w") as f:
-        json.dump(order_history, f, indent=4)
-
-# ================= PRODUCTS FILE =================
-PRODUCTS_FILE = "products.json"
+# Load products
 if os.path.exists(PRODUCTS_FILE):
     try:
         with open(PRODUCTS_FILE, "r") as f:
             products = json.load(f)
-    except json.JSONDecodeError:
+    except:
         products = []
 else:
     products = [
@@ -57,6 +54,11 @@ else:
     ]
     with open(PRODUCTS_FILE, "w") as f:
         json.dump(products, f, indent=4)
+
+# ================= SAVE FUNCTIONS =================
+def save_orders():
+    with open(ORDERS_FILE, "w") as f:
+        json.dump(order_history, f, indent=4)
 
 def save_products():
     with open(PRODUCTS_FILE, "w") as f:
@@ -74,7 +76,6 @@ def send_email(subject, body):
         server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
         server.send_message(msg)
         server.quit()
-        print("Email Sent Successfully")
     except Exception as e:
         print("Email Error:", e)
 
@@ -84,8 +85,6 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Strict"
 )
-
-
 # ================= HOME =================
 # ================= HOME =================
 # ================= HOME =================
