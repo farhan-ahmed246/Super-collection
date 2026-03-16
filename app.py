@@ -1,4 +1,4 @@
-ab sahi from datetime import datetime, timedelta, date
+sahi hai code from datetime import datetime, timedelta, date
 from flask import Flask, render_template_string, request, redirect, session, url_for 
 from werkzeug.utils import secure_filename
 import os
@@ -110,7 +110,12 @@ a{text-decoration:none;color:white;}
 
 <!-- ADMIN LOGIN -->
 <div class="d-flex justify-content-end mb-2">
-<a href="/admin" class="btn btn-warning btn-sm">Admin Login</a>
+<a href="/admin" class="btn btn-warning btn-sm">⚙️Admin Login</a>
+
+<a href="/order_history" class="btn btn-info btn-sm">
+📦 Order History
+</a>
+
 </div>
 
 <!-- SC LOGO -->
