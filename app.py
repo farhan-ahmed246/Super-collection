@@ -26,9 +26,20 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'webp'}
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-PRODUCTS_FILE = "products.json"
-order_history = []
+#----------------Otder History -------------------
+ORDERS_FILE = "orders.json"
 
+# Load existing orders
+if os.path.exists(ORDERS_FILE):
+    with open(ORDERS_FILE, "r") as f:
+        order_history = json.load(f)
+else:
+    order_history = []
+
+# Function to save orders
+def save_orders():
+    with open(ORDERS_FILE, "w") as f:
+        json.dump(order_history, f, indent=4)
 # ---------------- SESSIONS SECURE ----------------
 app.config.update(
     SESSION_COOKIE_SECURE=True,
@@ -110,7 +121,12 @@ a{text-decoration:none;color:white;}
 
 <!-- ADMIN LOGIN -->
 <div class="d-flex justify-content-end mb-2">
-<a href="/admin" class="btn btn-warning btn-sm">Admin Login</a>
+<a href="/admin" class="btn btn-warning btn-sm">⚙️Admin Login</a>
+
+<a href="/order_history" class="btn btn-info btn-sm">
+📦 Order History
+</a>
+
 </div>
 
 <!-- SC LOGO -->
@@ -215,6 +231,8 @@ def checkout():
             "total": total_price,
             "delivery": delivery
         })
+
+        save_orders()
 
         # Send email notification (optional)
         send_email(
@@ -332,6 +350,11 @@ def admin():
         user = request.form.get("admin_user")
         password = request.form.get("admin_pass")
         if user == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+
+            send_email(
+    "Admin Login Alert",
+    f"Admin login hua hai.\n\nTime: {datetime.now()}\nUsername: {user}"
+)
             session["admin"] = True
             return redirect("/admin_dashboard")
         else:
@@ -496,18 +519,21 @@ def order_history_page():
     <head>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body{background:linear-gradient(45deg,#007bff,#ff0000);}
-        .table{background:white;}
+        body{background:black;color:white;font-family:sans-serif;}
+        table{background:#111;color:white;}
+        th, td{padding:10px;text-align:center;}
+        a{color:#ff6600;text-decoration:none;}
     </style>
     </head>
     <body>
     <div class="container mt-5">
-    <h2 class="text-white">Order History</h2>
+    <h2>Order History</h2>
     <table class="table table-bordered mt-3">
     <tr>
         <th>Name</th>
         <th>Product</th>
         <th>Quantity</th>
+        <th>Size</th>
         <th>Total</th>
         <th>Delivery</th>
     </tr>
@@ -519,6 +545,7 @@ def order_history_page():
             <td>{o['name']}</td>
             <td>{o['product']}</td>
             <td>{o['quantity']}</td>
+            <td>{o['size']}</td>
             <td>PKR {o['total']}</td>
             <td>{o['delivery']}</td>
         </tr>
@@ -526,7 +553,7 @@ def order_history_page():
 
     html += """
     </table>
-    <a href="/" class="btn btn-dark">Back</a>
+    <a href="/" class="btn btn-dark">⬅ Back</a>
     </div>
     </body>
     </html>
