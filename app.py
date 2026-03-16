@@ -16,8 +16,8 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "fmukhtar420@gmail.com")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "blueberry@420")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "fmukhtar420@gmail.com")
-#GMAIL_USER = os.environ.get("GMAIL_USER", "fmukhtar420@gmail.com")
-#GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "bnap lyde xsxm twql")
+GMAIL_USER = os.environ.get("GMAIL_USER", "fmukhtar420@gmail.com")
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "yopk vlmm yjtt rulq")
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'webp'}
@@ -46,18 +46,22 @@ def save_products():
         json.dump(products, f)
 
 # ---------------- EMAIL FUNCTION ----------------
-#def send_email(subject, body):
-   # try:
-       # msg = MIMEText(body)
-        #msg["Subject"] = subject
-        #msg["From"] = GMAIL_USER
-        #msg["To"] = ADMIN_EMAIL
-        #server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
-        #server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
-        #server.send_message(msg)
-        #server.quit()
-    #except Exception as e:
-        #print("Email Error:", e)
+def send_email(subject, body):
+    try:
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = GMAIL_USER
+        msg["To"] = ADMIN_EMAIL
+
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+        server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+
+        print("Email Sent Successfully")
+
+    except Exception as e:
+        print("Email Error:", e)
 
 # ================= HOME =================
 # ================= HOME =================
