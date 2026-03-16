@@ -8,6 +8,13 @@ from email.mime.text import MIMEText
 from google_auth_oauthlib.flow import Flow
 import requests
 
+# ---------------- SESSIONS SECURE ----------------
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Strict"
+)
+
 # ================= APP CONFIG =================
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
@@ -316,96 +323,56 @@ function selectSize(btn){
 """
 
 # ================= ADMIN LOGIN =================
-@app.route("/admin", methods=["GET","POST"])
+@app.route("/admin", methods=["GET", "POST"])
 def admin():
     error = ""
     if request.method == "POST":
-        if request.form.get("admin_user") == ADMIN_USERNAME and \
-           request.form.get("admin_pass") == ADMIN_PASSWORD:
-
+        user = request.form.get("admin_user")
+        password = request.form.get("admin_pass")
+        if user == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session["admin"] = True
-
-            # Gmail email try, fail hone par ignore
-            try:
-                send_email(
-                    "Admin Login Alert - Super Collection",
-                    f"Admin logged in at {datetime.now()}"
-                )
-            except Exception as e:
-                print("Email failed:", e)
-
             return redirect("/admin_dashboard")
         else:
             error = "Invalid Credentials ❌"
 
-    return f"""
+    return render_template_string("""
 <html>
 <head>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-body {{
-    margin:0;
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+body {
+    margin:0; height:100vh; display:flex; justify-content:center; align-items:center;
     background:linear-gradient(-45deg,#ff0000,#007bff,#00c6ff,#ff6600);
-    background-size:400% 400%;
-    animation:gradient 8s ease infinite;
-}}
-@keyframes gradient {{
-    0% {{background-position:0% 50%;}}
-    50% {{background-position:100% 50%;}}
-    100% {{background-position:0% 50%;}}
-}}
-.box {{
-    background:white;
-    padding:50px;
-    border-radius:20px;
-    text-align:center;
-    box-shadow:0 20px 50px rgba(0,0,0,0.3);
-    width:350px;
-}}
-.title {{
-    font-size:45px;
-    font-weight:900;
-    color:green;
-}}
+    background-size:400% 400%; animation:gradient 8s ease infinite;
+}
+@keyframes gradient {
+    0% {background-position:0% 50%;}
+    50% {background-position:100% 50%;}
+    100% {background-position:0% 50%;}
+}
+.box {
+    background:white; padding:50px; border-radius:20px;
+    text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.3); width:350px;
+}
+.title { font-size:45px; font-weight:900; color:green; }
 </style>
 </head>
 <body>
 <div class="box">
 <div class="title">ADMIN LOGIN</div>
-
 <form method="post" style="margin-top:20px;" autocomplete="off">
-
-    <!-- Hidden fake inputs to block autofill -->
     <input type="text" style="display:none">
     <input type="password" style="display:none">
 
-    <input type="text"
-           name="admin_user"
-           placeholder="Username"
-           class="form-control mb-3"
-           autocomplete="off"
-           required>
-
-    <input type="password"
-           name="admin_pass"
-           placeholder="Password"
-           class="form-control mb-3"
-           autocomplete="new-password"
-           required>
-
+    <input type="text" name="admin_user" placeholder="Username" class="form-control mb-3" autocomplete="off" required>
+    <input type="password" name="admin_pass" placeholder="Password" class="form-control mb-3" autocomplete="new-password" required>
     <button class="btn btn-success w-100">Login</button>
 </form>
-
-<p style="color:red;">{error}</p>
+<p style="color:red;">{{error}}</p>
 </div>
 </body>
 </html>
-"""
-
+""", error=error)
 # ================= ADMIN DASHBOARD =================
 # ================= ADMIN DASHBOARD =================
 @app.route("/admin_dashboard", methods=["GET","POST"])
