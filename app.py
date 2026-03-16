@@ -360,13 +360,19 @@ def admin():
         user = request.form.get("admin_user")
         password = request.form.get("admin_pass")
         if user == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-
-            send_email(
-    "Admin Login Alert",
-    f"Admin login hua hai.\n\nTime: {datetime.now()}\nUsername: {user}"
-)
-            session["admin"] = True
-            return redirect("/admin_dashboard")
+    # Set session
+    session["admin"] = True
+    
+    # Email notification safely
+    try:
+        send_email(
+            "Admin Login Alert",
+            f"Admin login hua hai.\n\nTime: {datetime.now()}\nUsername: {user}"
+        )
+    except Exception as e:
+        print("Admin Email Error:", e)  # Crash nahi hoga
+    
+    return redirect("/admin_dashboard")
         else:
             error = "Invalid Credentials ❌"
 
