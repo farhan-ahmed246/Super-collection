@@ -9,10 +9,10 @@ from google_auth_oauthlib.flow import Flow
 import requests
 
 
+
 # ================= APP CONFIG =================
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
-
 
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "fmukhtar420@gmail.com")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "blueberry@420")
@@ -26,43 +26,29 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'webp'}
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-#----------------Otder History -------------------
+# ================= ORDERS FILE =================
 ORDERS_FILE = "orders.json"
-
-# Load existing orders
 if os.path.exists(ORDERS_FILE):
-    with open(ORDERS_FILE, "r") as f:
-        order_history = json.load(f)
+    try:
+        with open(ORDERS_FILE, "r") as f:
+            order_history = json.load(f)
+    except json.JSONDecodeError:
+        order_history = []
 else:
     order_history = []
 
-# Function to save orders
 def save_orders():
     with open(ORDERS_FILE, "w") as f:
         json.dump(order_history, f, indent=4)
 
-#------------------ prouct file ------------------
-
+# ================= PRODUCTS FILE =================
 PRODUCTS_FILE = "products.json"
 if os.path.exists(PRODUCTS_FILE):
-    with open(PRODUCTS_FILE, "r") as f:
-        products = json.load(f)
-else:
-    products = []
-    with open(PRODUCTS_FILE, "w") as f:
-        json.dump(products, f)
-# ---------------- SESSIONS SECURE ----------------
-app.config.update(
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Strict"
-)
-
-
-# ---------------- PRODUCTS DATA ----------------
-if os.path.exists(PRODUCTS_FILE):
-    with open(PRODUCTS_FILE, "r") as f:
-        products = json.load(f)
+    try:
+        with open(PRODUCTS_FILE, "r") as f:
+            products = json.load(f)
+    except json.JSONDecodeError:
+        products = []
 else:
     products = [
         {"id": i, "title": f"Super Product {i}", "price": 2850,
@@ -70,13 +56,13 @@ else:
         for i in range(1, 31)
     ]
     with open(PRODUCTS_FILE, "w") as f:
-        json.dump(products, f)
+        json.dump(products, f, indent=4)
 
 def save_products():
     with open(PRODUCTS_FILE, "w") as f:
-        json.dump(products, f)
+        json.dump(products, f, indent=4)
 
-# ---------------- EMAIL FUNCTION ----------------
+# ================= EMAIL FUNCTION =================
 def send_email(subject, body):
     try:
         msg = MIMEText(body)
@@ -88,11 +74,17 @@ def send_email(subject, body):
         server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
         server.send_message(msg)
         server.quit()
-
         print("Email Sent Successfully")
-
     except Exception as e:
         print("Email Error:", e)
+
+# ================= SESSION SETTINGS =================
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Strict"
+)
+
 
 # ================= HOME =================
 # ================= HOME =================
