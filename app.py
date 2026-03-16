@@ -319,20 +319,24 @@ function selectSize(btn){
 @app.route("/admin", methods=["GET","POST"])
 def admin():
     error = ""
-    if request.method == "POST":
-        if request.form.get("admin_user") == ADMIN_USERNAME and \
-           request.form.get("admin_pass") == ADMIN_PASSWORD:
+   if request.method == "POST":
+    if request.form.get("admin_user") == ADMIN_USERNAME and \
+       request.form.get("admin_pass") == ADMIN_PASSWORD:
 
-            session["admin"] = True
+        session["admin"] = True
 
+        # Gmail email try, fail hone par ignore
+        try:
             send_email(
                 "Admin Login Alert - Super Collection",
                 f"Admin logged in at {datetime.now()}"
             )
+        except Exception as e:
+            print("Email failed:", e)
 
-            return redirect("/admin_dashboard")
-        else:
-            error = "Invalid Credentials ❌"
+        return redirect("/admin_dashboard")
+    else:
+        error = "Invalid Credentials ❌"
 
     return f"""
 <html>
