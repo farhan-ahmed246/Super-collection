@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+ab sahi from datetime import datetime, timedelta, date
 from flask import Flask, render_template_string, request, redirect, session, url_for 
 from werkzeug.utils import secure_filename
 import os
@@ -9,12 +9,11 @@ from google_auth_oauthlib.flow import Flow
 import requests
 
 
-
 # ================= APP CONFIG =================
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret_key")
 
-# Admin / Gmail config
+
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "fmukhtar420@gmail.com")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "blueberry@420")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "fmukhtar420@gmail.com")
@@ -23,29 +22,25 @@ GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "yopk vlmm yjtt rulq")
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'webp'}
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# ================= DATA FILES =================
-ORDERS_FILE = "orders.json"
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
 PRODUCTS_FILE = "products.json"
+order_history = []
 
-# Load orders
-if os.path.exists(ORDERS_FILE):
-    try:
-        with open(ORDERS_FILE, "r") as f:
-            order_history = json.load(f)
-    except:
-        order_history = []
-else:
-    order_history = []
+# ---------------- SESSIONS SECURE ----------------
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Strict"
+)
 
-# Load products
+
+# ---------------- PRODUCTS DATA ----------------
 if os.path.exists(PRODUCTS_FILE):
-    try:
-        with open(PRODUCTS_FILE, "r") as f:
-            products = json.load(f)
-    except:
-        products = []
+    with open(PRODUCTS_FILE, "r") as f:
+        products = json.load(f)
 else:
     products = [
         {"id": i, "title": f"Super Product {i}", "price": 2850,
@@ -53,18 +48,13 @@ else:
         for i in range(1, 31)
     ]
     with open(PRODUCTS_FILE, "w") as f:
-        json.dump(products, f, indent=4)
-
-# ================= SAVE FUNCTIONS =================
-def save_orders():
-    with open(ORDERS_FILE, "w") as f:
-        json.dump(order_history, f, indent=4)
+        json.dump(products, f)
 
 def save_products():
     with open(PRODUCTS_FILE, "w") as f:
-        json.dump(products, f, indent=4)
+        json.dump(products, f)
 
-# ================= EMAIL FUNCTION =================
+# ---------------- EMAIL FUNCTION ----------------
 def send_email(subject, body):
     try:
         msg = MIMEText(body)
@@ -76,15 +66,12 @@ def send_email(subject, body):
         server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
         server.send_message(msg)
         server.quit()
+
+        print("Email Sent Successfully")
+
     except Exception as e:
         print("Email Error:", e)
 
-# ================= SESSION SETTINGS =================
-app.config.update(
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Strict"
-)
 # ================= HOME =================
 # ================= HOME =================
 # ================= HOME =================
@@ -97,7 +84,6 @@ def home():
     filtered = [p for p in products if search in p["title"].lower()]
 
     banner_path = "static/banner.jpg" if os.path.exists("static/banner.jpg") else "https://static.vecteezy.com/system/resources/previews/021/962/217/non_2x/ramadan-sale-banner-vector.jpg"
-    ramadan_badge_exists = os.path.exists("static/ramadan_badge.png")
 
     html = """
 <html>
@@ -117,14 +103,6 @@ body{background:black;color:white;font-family:sans-serif;}
 .search-bar{max-width:400px;margin:0 auto 20px;display:block;}
 .size-btn{border-radius:50%;background:#222;color:white;width:50px;height:50px;margin:5px;border:none;cursor:pointer;}
 a{text-decoration:none;color:white;}
-.badge-ramadan-home{
-    width:80px;
-    height:80px;
-    border-radius:50%;
-    display:block;
-    margin:10px auto;
-    border:2px solid #fff;
-}
 </style>
 </head>
 <body>
@@ -132,8 +110,7 @@ a{text-decoration:none;color:white;}
 
 <!-- ADMIN LOGIN -->
 <div class="d-flex justify-content-end mb-2">
-<a href="/admin" class="btn btn-warning btn-sm">⚙️Admin Login</a>
-<a href="/order_history" class="btn btn-info btn-sm"> 📦 Order History </a> 
+<a href="/admin" class="btn btn-warning btn-sm">Admin Login</a>
 </div>
 
 <!-- SC LOGO -->
@@ -142,20 +119,24 @@ a{text-decoration:none;color:white;}
 <div class="logo-text">SUPER COLLECTION</div>
 </div>
 
-<!-- SOCIAL ICONS -->
 <div class="mb-3 text-center">
+
 <a href="https://www.instagram.com/supercollection6547/" target="_blank">
 <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon">
 </a>
+
 <a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank">
 <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon">
 </a>
+
 <a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank">
 <img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon">
 </a>
+
 <a href="https://wa.me/923363016943" target="_blank">
 <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon">
 </a>
+
 </div>
 
 <!-- SEARCH -->
@@ -164,12 +145,7 @@ a{text-decoration:none;color:white;}
 </form>
 
 <!-- BANNER -->
-<img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-2" style="width:100%;height:auto;border-radius:20px;">
-
-<!-- RAMADAN BADGE -->
-{% if ramadan_badge_exists %}
-<img src="{{ url_for('static', filename='ramadan_badge.png') }}" class="badge-ramadan-home">
-{% endif %}
+<img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-4" style="width:100%;height:auto;border-radius:20px;">
 
 {% if not filtered %}
 <h3 class="mt-4 text-center">Not Available ❌</h3>
@@ -204,7 +180,6 @@ a{text-decoration:none;color:white;}
         html,
         filtered=filtered,
         banner_url=banner_path,
-        ramadan_badge_exists=ramadan_badge_exists,
         timestamp=datetime.now().timestamp()
     )
 # ================= SIMPLE CHECKOUT =================
@@ -240,8 +215,6 @@ def checkout():
             "total": total_price,
             "delivery": delivery
         })
-
-        save_orders()
 
         # Send email notification (optional)
         send_email(
@@ -359,19 +332,13 @@ def admin():
         user = request.form.get("admin_user")
         password = request.form.get("admin_pass")
         if user == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-    # Set session
-    session["admin"] = True
-    
-    # Email notification safely
-    try:
-        send_email(
-            "Admin Login Alert",
-            f"Admin login hua hai.\n\nTime: {datetime.now()}\nUsername: {user}"
-        )
-    except Exception as e:
-        print("Admin Email Error:", e)  # Crash nahi hoga
-    
-    return redirect("/admin_dashboard")
+
+            send_email(
+    "Admin Login Alert",
+    f"Admin login hua hai.\n\nTime: {datetime.now()}\nUsername: {user}"
+)
+            session["admin"] = True
+            return redirect("/admin_dashboard")
         else:
             error = "Invalid Credentials ❌"
 
@@ -534,21 +501,18 @@ def order_history_page():
     <head>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body{background:black;color:white;font-family:sans-serif;}
-        table{background:#111;color:white;}
-        th, td{padding:10px;text-align:center;}
-        a{color:#ff6600;text-decoration:none;}
+        body{background:linear-gradient(45deg,#007bff,#ff0000);}
+        .table{background:white;}
     </style>
     </head>
     <body>
     <div class="container mt-5">
-    <h2>Order History</h2>
+    <h2 class="text-white">Order History</h2>
     <table class="table table-bordered mt-3">
     <tr>
         <th>Name</th>
         <th>Product</th>
         <th>Quantity</th>
-        <th>Size</th>
         <th>Total</th>
         <th>Delivery</th>
     </tr>
@@ -560,7 +524,6 @@ def order_history_page():
             <td>{o['name']}</td>
             <td>{o['product']}</td>
             <td>{o['quantity']}</td>
-            <td>{o['size']}</td>
             <td>PKR {o['total']}</td>
             <td>{o['delivery']}</td>
         </tr>
@@ -568,7 +531,7 @@ def order_history_page():
 
     html += """
     </table>
-    <a href="/" class="btn btn-dark">⬅ Back</a>
+    <a href="/" class="btn btn-dark">Back</a>
     </div>
     </body>
     </html>
