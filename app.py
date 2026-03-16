@@ -8,12 +8,6 @@ from email.mime.text import MIMEText
 from google_auth_oauthlib.flow import Flow
 import requests
 
-# ---------------- SESSIONS SECURE ----------------
-app.config.update(
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Strict"
-)
 
 # ================= APP CONFIG =================
 app = Flask(__name__)
@@ -34,6 +28,14 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 
 PRODUCTS_FILE = "products.json"
 order_history = []
+
+# ---------------- SESSIONS SECURE ----------------
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Strict"
+)
+
 
 # ---------------- PRODUCTS DATA ----------------
 if os.path.exists(PRODUCTS_FILE):
