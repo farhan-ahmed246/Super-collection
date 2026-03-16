@@ -322,15 +322,12 @@ def admin():
 
             session["admin"] = True
 
-            send_email(
-                "Admin Login Alert - Super Collection",
-                f"Admin logged in at {datetime.now()}"
-            )
+            # Is line ko delete ya comment kar dein:
+            # send_email("Admin Login Alert", f"Admin logged in at {datetime.now()}")
 
             return redirect("/admin_dashboard")
         else:
             error = "Invalid Credentials ❌"
-
     return f"""
 <html>
 <head>
