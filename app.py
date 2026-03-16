@@ -40,6 +40,17 @@ else:
 def save_orders():
     with open(ORDERS_FILE, "w") as f:
         json.dump(order_history, f, indent=4)
+
+#------------------ prouct file ------------------
+
+PRODUCTS_FILE = "products.json"
+if os.path.exists(PRODUCTS_FILE):
+    with open(PRODUCTS_FILE, "r") as f:
+        products = json.load(f)
+else:
+    products = []
+    with open(PRODUCTS_FILE, "w") as f:
+        json.dump(products, f)
 # ---------------- SESSIONS SECURE ----------------
 app.config.update(
     SESSION_COOKIE_SECURE=True,
