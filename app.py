@@ -54,33 +54,32 @@ def save_products():
     with open(PRODUCTS_FILE, "w") as f:
         json.dump(products, f)
 # ---------------- EMAIL FUNCTION ----------------
-
 def send_email(subject, body):
-    # Credentials (Spaces khatam kar ke check karein)
-    user = GMAIL_USER
-    pw = GMAIL_APP_PASSWORD 
-    admin = ADMIN_EMAIL
+    # Credentials ko confirm karein (Spaces bilkul nahi honi chahiye)
+    user = GMAIL_USER.strip()
+    pw = GMAIL_APP_PASSWORD.strip()
+    admin = ADMIN_EMAIL.strip()
 
     try:
-        # Email setup
         msg = MIMEText(body)
         msg["Subject"] = subject
         msg["From"] = user
         msg["To"] = admin
         
-        # SMTP Server Connection (Port 587 is more reliable for deployment)
-        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=15)
-        server.starttls()  # Connection ko secure banane ke liye
+        # Port 587 deployment ke liye behtar hai
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=20)
+        server.set_debuglevel(1) # Is se logs mein error saaf dikhay ga
+        server.starttls()  # Connection secure karne ke liye lazmi hai
         
         server.login(user, pw)
         server.send_message(msg)
         server.quit()
         
-        print(f"✅ Notification Sent: {subject}")
+        print(f"✅ Email notification sent successfully!")
         return True
     except Exception as e:
-        # Is se aapka server crash nahi hoga, bas terminal mein error dikhay ga
-        print(f"❌ Email Failed on Server: {e}")
+        # Agar fail ho jaye to aapke server logs mein error dikhay ga
+        print(f"❌ Deployment Email Error: {str(e)}")
         return False
 # ================= HOME =================
 # ================= HOME =================
