@@ -65,24 +65,32 @@ def send_email(subject, body):
 from flask import render_template_string, request, session
 from datetime import datetime
 
-# ================= HOME ROUTE (UPDATED) =================
-# ================= HOME ROUTE (COMPLETE FIX) =================
 @app.route("/", methods=["GET"])
 def home():
-    # User jo search karega woh yahan aayega
-    search_query = request.args.get("search", "").strip().lower()
+    global products
     
-    # AGAR SEARCH KHALI HAI: Toh saare products dikhao
-    # AGAR SEARCH MEIN KUCH HAI: Toh sirf matching products dikhao
-    if not search_query:
-        filtered = products
-    else:
-        filtered = [p for p in products if search_query in p.get("title", "").lower()]
+    # 1. Check karein agar products khali hain to sample data load karein
+    if not products or len(products) == 0:
+        products = [
+            {"id": i, "title": f"Super Product {i}", "price": 2500 + (i*10),
+             "description": "Premium Quality Product from Super Collection", 
+             "images": [], "image": "", "ratings": []}
+            for i in range(1, 11) # Sirf 10 sample products filhaal
+        ]
+        # File mein bhi save kar dein taake [] khatam ho jaye
+        with open(PRODUCTS_FILE, "w") as f:
+            json.dump(products, f)
 
-    # Banner check logic
+    search_query = request.args.get("search", "").strip().lower()
+
+    # 2. Filtering Logic
+    if search_query:
+        filtered = [p for p in products if search_query in p.get("title", "").lower()]
+    else:
+        filtered = products
+
+    # 3. Banner & Timestamp
     banner_url = "static/banner.jpg" if os.path.exists("static/banner.jpg") else "https://static.vecteezy.com/system/resources/previews/021/962/217/non_2x/ramadan-sale-banner-vector.jpg"
-    
-    # Current time for cache busting (taake banner update foran nazar aaye)
     timestamp = datetime.now().timestamp()
 
     html = """
@@ -96,88 +104,60 @@ body{background:black;color:white;font-family:sans-serif;}
 .logo-sc{font-size:90px;font-weight:900;letter-spacing:5px;background:linear-gradient(45deg,#00c6ff,#ff00cc,#ff6600);-webkit-background-clip:text;-webkit-text-fill-color:transparent;position:relative;display:inline-block;}
 .logo-sc:after{content:"⚡";position:absolute;left:50%;transform:translateX(-50%);top:-10px;font-size:100px;color:#ffcc00;text-shadow:0 0 20px #ffcc00;}
 .logo-text{font-size:32px;font-weight:700;margin-top:-10px;letter-spacing:3px;}
-.card{border:none;border-radius:15px;transition:0.3s;background:#111;color:white; height:100%;}
-.card:hover{transform:scale(1.05);box-shadow:0 10px 25px rgba(0,198,255,0.3);}
-.btn-cart{background:#ff6600;border:none;color:white;padding:10px 20px;font-size:16px;margin-top:10px;border-radius:10px;cursor:pointer;width:100%; font-weight:bold;}
+.card{border:none;border-radius:15px;transition:0.3s;background:#111;color:white; height:100%; border: 1px solid #333;}
+.card:hover{transform:translateY(-5px);box-shadow:0 10px 25px rgba(0,198,255,0.3); border-color: #00c6ff;}
+.btn-cart{background:#ff6600;border:none;color:white;padding:12px;font-size:16px;margin-top:10px;border-radius:10px;cursor:pointer;width:100%; font-weight:bold;}
 .icon{width:45px;margin:0 10px;filter:invert(1);}
-.product-img{width:100%;height:300px;object-fit:contain;background:#000;border-radius:10px;}
-.search-bar{max-width:400px;margin:0 auto 20px;display:block; background:#222; color:white; border:1px solid #444;}
-.search-bar:focus{background:#333; color:white; border-color:#ff6600;}
+.product-img{width:100%;height:250px;object-fit:contain;background:#000;border-radius:10px;}
+.search-bar{max-width:400px;margin:0 auto 20px;display:block; background:#222; color:white; border:1px solid #444; border-radius: 20px;}
 a{text-decoration:none;color:white;}
 </style>
 </head>
 <body>
-<div class="container mt-4">
+<div class="container mt-4 text-center">
+    <div class="d-flex justify-content-end"><a href="/admin" class="btn btn-warning btn-sm">Admin Login</a></div>
+    
+    <div class="logo-box">
+        <div class="logo-sc">SC</div>
+        <div class="logo-text">SUPER COLLECTION</div>
+    </div>
 
-<div class="d-flex justify-content-end mb-2">
-<a href="/admin" class="btn btn-warning btn-sm">Admin Login</a>
-</div>
+    <form method="get" action="/">
+        <input type="text" name="search" value="{{ search_val }}" placeholder="🔍 Search Products..." class="form-control search-bar">
+    </form>
 
-<div class="logo-box">
-<div class="logo-sc">SC</div>
-<div class="logo-text">SUPER COLLECTION</div>
-</div>
+    <img src="{{ banner_url }}?v={{ timestamp }}" class="img-fluid mb-4" style="border-radius:20px; max-height:350px; width:100%; object-fit:cover;">
 
-<div class="mb-3 text-center">
-<a href="https://wa.me/923363016943" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon"></a>
-<a href="https://www.instagram.com/supercollection6547/" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon"></a>
-<a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon"></a>
-<a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon"></a>
-</div>
+    {% if not filtered %}
+    <div class="py-5">
+        <h2 class="text-danger">Product Not Available ❌</h2>
+        <a href="/" class="btn btn-primary mt-3">Back to Shop</a>
+    </div>
+    {% endif %}
 
-<form method="get" class="mt-3">
-<input type="text" name="search" value="{{ search_val }}" placeholder="🔍 Search Products" class="form-control search-bar">
-</form>
-
-<img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-4" style="width:100%;height:auto;border-radius:20px; max-height:400px; object-fit:cover;">
-
-{% if not filtered %}
-<div class="text-center py-5">
-    <h3 class="text-danger">Product Not Available ❌</h3>
-    <p>Humare pas is naam ka koi product nahi hai.</p>
-    <a href="/" class="btn btn-outline-light">Back to Shop</a>
-</div>
-{% endif %}
-
-<div class="row mt-4">
-{% for p in filtered %}
-<div class="col-md-4 mb-4">
-    <div class="card p-3 text-center">
-        <a href="/product/{{p.id}}">
-            {% if p.images %}
-            <img src="{{p.images[0]}}" class="product-img mb-2">
-            {% elif p.image %}
-            <img src="{{p.image}}" class="product-img mb-2">
-            {% else %}
-            <img src="https://via.placeholder.com/300x300?text=No+Image" class="product-img mb-2">
-            {% endif %}
-        </a>
-        <h5><a href="/product/{{p.id}}">{{p.title}}</a></h5>
-        <p class="text-muted small">{{p.description[:50]}}...</p>
-        <h6 class="text-warning">PKR {{p.price}}</h6>
-
-        <form action="/add_to_cart/{{p.id}}" method="get">
-            <input type="hidden" name="quantity" value="1">
-            <input type="hidden" name="size" value="N/A">
-            <button class="btn-cart">Add To Cart</button>
-        </form>
+    <div class="row text-start">
+    {% for p in filtered %}
+    <div class="col-md-4 mb-4">
+        <div class="card p-3">
+            <a href="/product/{{p.id}}">
+                {% if p.images %}<img src="{{p.images[0]}}" class="product-img mb-2">
+                {% else %}<img src="https://via.placeholder.com/300x300?text=No+Image" class="product-img mb-2">{% endif %}
+            </a>
+            <h5 class="mt-2 text-center">{{p.title}}</h5>
+            <h6 class="text-warning text-center">PKR {{p.price}}</h6>
+            <form action="/add_to_cart/{{p.id}}" method="get">
+                <input type="hidden" name="quantity" value="1"><input type="hidden" name="size" value="N/A">
+                <button class="btn-cart">Add To Cart</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
     </div>
 </div>
-{% endfor %}
-</div>
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 """
-    return render_template_string(
-        html,
-        filtered=filtered,
-        banner_url=banner_url,
-        timestamp=timestamp,
-        search_val=search_query
-    )
+    return render_template_string(html, filtered=filtered, banner_url=banner_url, timestamp=timestamp, search_val=search_query)
 
 # ================= SIMPLE CHECKOUT =================
 @app.route("/checkout", methods=["GET", "POST"])
