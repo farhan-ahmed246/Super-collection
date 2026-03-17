@@ -17,7 +17,7 @@ ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "fmukhtar420@gmail.com")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "blueberry@420")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "fmukhtar420@gmail.com")
 GMAIL_USER = os.environ.get("GMAIL_USER", "fmukhtar420@gmail.com")
-GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "qkbh axwv pbco djgy")
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "qkbhaxwvpbcodjgy")
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'webp'}
