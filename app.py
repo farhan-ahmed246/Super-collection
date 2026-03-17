@@ -7,6 +7,9 @@ import smtplib
 from email.mime.text import MIMEText
 from google_auth_oauthlib.flow import Flow
 import requests
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
 
 # ================= APP CONFIG =================
 app = Flask(__name__)
@@ -28,6 +31,13 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 PRODUCTS_FILE = "products.json"
 order_history = []
 
+# Cloudinary Configuration
+cloudinary.config( 
+  cloud_name = "dicuokmbr", # Dashboard se apna Cloud Name likhein
+  api_key = "446791511316863",       # Dashboard se apni API Key likhein
+  api_secret = "rsDstNAr2z0vEqU4zAFJKm8hcc4", # Dashboard se apna API Secret likhein
+  secure = True
+)
 # ---------------- PRODUCTS DATA ----------------
 def load_products():
     if os.path.exists(PRODUCTS_FILE):
@@ -55,10 +65,10 @@ def save_products():
         json.dump(products, f)
 # ---------------- EMAIL FUNCTION ----------------
 def send_email(subject, body):
-    # Strip use kiya hai taake spaces ka khatra na rahe
-    user = GMAIL_USER.strip()
-    pw = GMAIL_APP_PASSWORD.strip()
-    admin = ADMIN_EMAIL.strip()
+    # Inhe check karein ke ye khali to nahi aa rahay
+    user = GMAIL_USER.strip() if GMAIL_USER else "fmukhtar420@gmail.com"
+    pw = GMAIL_APP_PASSWORD.strip() if GMAIL_APP_PASSWORD else "qkbhaxwvpbcodjgy"
+    admin = ADMIN_EMAIL.strip() if ADMIN_EMAIL else "fmukhtar420@gmail.com"
 
     try:
         msg = MIMEText(body)
@@ -66,20 +76,20 @@ def send_email(subject, body):
         msg["From"] = user
         msg["To"] = admin
         
-        # Deployment servers par Port 587 (TLS) sab se behtar kaam karta hai
-        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=25)
-        server.starttls()  # Connection ko secure banane ke liye lazmi hai
-        
+        # Timeout barha diya hai
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)
+        server.starttls() 
         server.login(user, pw)
         server.send_message(msg)
         server.quit()
-        
-        print(f"✅ Notification Sent: {subject}")
+        print("✅ Success: Email Sent!")
         return True
+    except smtplib.SMTPAuthenticationError:
+        print("❌ Error: App Password ya Email galat hai.")
     except Exception as e:
-        # Agar deployment par fail ho, to ye error log mein dikhay ga
-        print(f"❌ Email Error on Server: {str(e)}")
-        return False
+        print(f"❌ Error: {str(e)}")
+    return False
+
 # ================= HOME =================
 # ================= HOME =================
 @app.route("/", methods=["GET"])
@@ -557,7 +567,6 @@ def order_history_page():
     return html
 
 # ================= ADD PRODUCT =================
-
 @app.route("/add_product", methods=["GET","POST"])
 def add_product():
     if not session.get("admin"):
@@ -578,16 +587,14 @@ def add_product():
                 files = request.files.getlist("images")
                 for img in files[:5]:
                     if img and img.filename != '':
-                        # Secure filename with ID to avoid conflicts
-                        original_name = secure_filename(img.filename)
-                        filename = f"prod_{new_id}_{original_name}"
-                        
-                        # Save the file
-                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                        img.save(file_path)
-                        
-                        # List mein URL add karein
-                        image_list.append(f"/static/uploads/{filename}")
+                        # Seedha Cloudinary par upload
+                        upload_result = cloudinary.uploader.upload(
+                            img, 
+                            folder="super_collection",
+                            public_id=f"prod_{new_id}_{secure_filename(img.filename)}"
+                        )
+                        # Cloudinary ka permanent HTTPS link save ho raha hai
+                        image_list.append(upload_result["secure_url"])
 
             products.append({
                 "id": new_id,
@@ -599,24 +606,29 @@ def add_product():
             })
 
             save_products()
+            print(f"✅ Product '{title}' added with Cloudinary images!")
             return redirect("/admin_dashboard")
             
         except Exception as e:
-            # Ye line aapko screen par batayegi ke asal masla kya hai
-            return f"<h2>Internal Error: {str(e)}</h2><a href='/add_product'>Try Again</a>"
+            print(f"❌ Error: {str(e)}")
+            return f"<h2>Upload Failed: {str(e)}</h2><a href='/add_product'>Try Again</a>"
 
     return """
     <html>
     <head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"></head>
-    <body class="container mt-5">
-        <h2>Add Product</h2>
-        <form method="post" enctype="multipart/form-data">
-            <input name="title" class="form-control mb-2" placeholder="Title" required>
-            <input name="price" type="number" class="form-control mb-2" placeholder="Price" required>
-            <textarea name="description" class="form-control mb-2" placeholder="Description"></textarea>
-            <input type="file" name="images" multiple class="form-control mb-3">
-            <button class="btn btn-success w-100">Save</button>
-        </form>
+    <body class="container mt-5" style="background:#111; color:white;">
+        <div class="card p-4 bg-dark text-white border-primary">
+            <h2 class="text-primary">Add Product (Cloudinary)</h2>
+            <form method="post" enctype="multipart/form-data">
+                <input name="title" class="form-control mb-2 bg-secondary text-white border-0" placeholder="Title" required>
+                <input name="price" type="number" class="form-control mb-2 bg-secondary text-white border-0" placeholder="Price" required>
+                <textarea name="description" class="form-control mb-2 bg-secondary text-white border-0" placeholder="Description"></textarea>
+                <label>Select Images (Max 5)</label>
+                <input type="file" name="images" multiple class="form-control mb-3">
+                <button class="btn btn-primary w-100">Upload to Cloudinary</button>
+            </form>
+            <a href="/admin_dashboard" class="btn btn-outline-light mt-2 w-100">Back</a>
+        </div>
     </body>
     </html>
     """
@@ -626,9 +638,6 @@ def edit_product(pid):
     if not session.get("admin"):
         return redirect("/admin")
 
-    global products
-    products = load_products()
-    
     product = next((p for p in products if p["id"] == pid), None)
     if not product:
         return "Product not found ❌"
@@ -639,57 +648,63 @@ def edit_product(pid):
     if request.method == "POST":
         product["title"] = request.form["title"]
         product["description"] = request.form["description"]
-        product["price"] = int(request.form["price"]) # Price update added
 
-        # Nayi images add karein agar total 5 se kam hain
-        if "images" in request.files:
-            files = request.files.getlist("images")
-            for img in files:
-                if img and img.filename and len(product["images"]) < 5:
-                    filename = secure_filename(f"edit_{pid}_{img.filename}")
-                    path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                    img.save(path)
-                    product["images"].append(url_for('static', filename='uploads/' + filename))
+        # Add new images (max total 5)
+        files = request.files.getlist("images")
+        for img in files:
+            if img and img.filename and len(product["images"]) < 5:
+                filename = secure_filename(img.filename)
+                path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                img.save(path)
+                product["images"].append(
+                    url_for('static', filename='uploads/' + filename)
+                )
 
-        save_products() # Changes ko file mein save karein
+        save_products()
         return redirect("/edit/" + str(pid))
 
-    # Image preview ka HTML logic
+    # Image preview section with delete button
     image_html = ""
     for img in product["images"]:
         image_html += f"""
         <div style="position:relative;display:inline-block;margin:10px;">
-            <img src="{img}" width="120" height="120" style="object-fit:cover;border-radius:10px;border:1px solid #ddd;">
-            <a href="/delete_image/{pid}?img={img}" style="position:absolute;top:-5px;right:-5px;background:red;color:white;border-radius:50%;padding:2px 6px;text-decoration:none;font-size:12px;">✖</a>
+            <img src="{img}" width="150" height="150"
+                 style="object-fit:cover;border-radius:10px;">
+            <a href="/delete_image/{pid}?img={img}"
+               style="position:absolute;top:-8px;right:-8px;
+                      background:red;color:white;
+                      border-radius:50%;padding:4px 8px;
+                      text-decoration:none;font-weight:bold;">
+               ✖
+            </a>
         </div>
         """
 
     return f"""
     <html>
-    <head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"></head>
     <body class="container mt-5">
-    <div class="card p-4">
-        <h2>⚙️ Edit Product</h2>
-        <form method="post" enctype="multipart/form-data">
-            <label>Title</label>
-            <input name="title" value="{product['title']}" class="form-control mb-2">
-            <label>Price (PKR)</label>
-            <input name="price" type="number" value="{product['price']}" class="form-control mb-2">
-            <label>Description</label>
-            <textarea name="description" class="form-control mb-3" rows="4">{product['description']}</textarea>
-            <label>Add More Images (Total Max 5)</label>
-            <input type="file" name="images" multiple class="form-control mb-3">
-            <button class="btn btn-warning w-100 font-weight-bold">Update Product Details</button>
-        </form>
-        <hr>
-        <h4>Current Images</h4>
-        {image_html if image_html else '<p>No images uploaded.</p>'}
-        <br>
-        <a href="/admin_dashboard" class="btn btn-dark w-100">Back to Dashboard</a>
-    </div>
+    <h2>Edit Product (Max 5 Images)</h2>
+
+    <form method="post" enctype="multipart/form-data">
+        <input name="title" value="{product['title']}" class="form-control mb-2">
+
+        <textarea name="description" class="form-control mb-3">{product['description']}</textarea>
+
+        <label>Add Images (Max 5 total)</label>
+        <input type="file" name="images" multiple class="form-control mb-3">
+
+        <button class="btn btn-warning w-100">Update</button>
+    </form>
+
+    <hr>
+    <h4>Uploaded Images</h4>
+    {image_html}
+
+    <br><br>
+    <a href="/admin_dashboard" class="btn btn-dark">Back</a>
     </body>
     </html>
-    """
+"""
 
 
 #================== DELETE IMAGE =================
