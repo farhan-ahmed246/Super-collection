@@ -55,7 +55,7 @@ def save_products():
         json.dump(products, f)
 # ---------------- EMAIL FUNCTION ----------------
 def send_email(subject, body):
-    # Credentials ko confirm karein (Spaces bilkul nahi honi chahiye)
+    # Strip use kiya hai taake spaces ka khatra na rahe
     user = GMAIL_USER.strip()
     pw = GMAIL_APP_PASSWORD.strip()
     admin = ADMIN_EMAIL.strip()
@@ -66,20 +66,19 @@ def send_email(subject, body):
         msg["From"] = user
         msg["To"] = admin
         
-        # Port 587 deployment ke liye behtar hai
-        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=20)
-        server.set_debuglevel(1) # Is se logs mein error saaf dikhay ga
-        server.starttls()  # Connection secure karne ke liye lazmi hai
+        # Deployment servers par Port 587 (TLS) sab se behtar kaam karta hai
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=25)
+        server.starttls()  # Connection ko secure banane ke liye lazmi hai
         
         server.login(user, pw)
         server.send_message(msg)
         server.quit()
         
-        print(f"✅ Email notification sent successfully!")
+        print(f"✅ Notification Sent: {subject}")
         return True
     except Exception as e:
-        # Agar fail ho jaye to aapke server logs mein error dikhay ga
-        print(f"❌ Deployment Email Error: {str(e)}")
+        # Agar deployment par fail ho, to ye error log mein dikhay ga
+        print(f"❌ Email Error on Server: {str(e)}")
         return False
 # ================= HOME =================
 # ================= HOME =================
