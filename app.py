@@ -497,7 +497,11 @@ body{background:#f8f9fa;}
 </body>
 </html>
 """
-    return render_template_string(html, banner_exists=banner_exists, ramadan_exists=ramadan_exists, products=products)
+    return render_template_string(html, 
+                                 banner_exists=banner_exists, 
+                                 ramadan_exists=ramadan_exists, 
+                                 products=products, 
+                                 url_for=url_for
 
 # ---------------- Delete Banner ----------------
 @app.route("/delete_banner")
