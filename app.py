@@ -65,25 +65,28 @@ def save_products():
         json.dump(products, f)
 # ---------------- EMAIL FUNCTION ----------------
 
-def send_notification(subject, body):
+def send_email(subject, body):
+    user = os.getenv("GMAIL_USER")
+    password = os.getenv("GMAIL_APP_PASSWORD")
+    admin = os.getenv("ADMIN_EMAIL")
+    
     try:
         msg = MIMEText(body)
         msg["Subject"] = subject
-        msg["From"] = GMAIL_USER
-        msg["To"] = ADMIN_EMAIL
+        msg["From"] = user
+        msg["To"] = admin
         
-        # Timeout 30 seconds rakha hai deploy server ke liye
         server = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)
         server.starttls()
-        server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+        server.login(user, password)
         server.send_message(msg)
         server.quit()
-        print("✅ Notification Sent Successfully!")
         return True
     except Exception as e:
-        print(f"❌ Notification Failed: {str(e)}")
-        return False
+        print(f"Error: {e}")
+        return FalseFalse
 
+ send_email("Alert", "Admin Logged In")
 # ================= HOME =================
 # ================= HOME =================
 @app.route("/", methods=["GET"])
