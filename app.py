@@ -558,61 +558,66 @@ def order_history_page():
     return html
 
 # ================= ADD PRODUCT =================
+
 @app.route("/add_product", methods=["GET","POST"])
 def add_product():
     if not session.get("admin"):
         return redirect("/admin")
 
     if request.method == "POST":
-        # Global list ko refresh karein
-        global products
-        products = load_products()
+        try:
+            global products
+            products = load_products()
 
-        new_id = max([p["id"] for p in products]) + 1 if products else 1
-        title = request.form["title"]
-        price = int(request.form["price"])
-        desc = request.form["description"]
+            new_id = max([p["id"] for p in products]) + 1 if products else 1
+            title = request.form.get("title")
+            price = int(request.form.get("price", 0))
+            desc = request.form.get("description")
 
-        image_list = []
-        if "images" in request.files:
-            files = request.files.getlist("images")
-            for img in files[:5]:
-                if img and img.filename:
-                    # Unique filename banayein taake image delete na ho ya overwrite na ho
-                    filename = secure_filename(f"{new_id}_{img.filename}")
-                    path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                    img.save(path)
-                    image_list.append(url_for('static', filename='uploads/' + filename))
+            image_list = []
+            if 'images' in request.files:
+                files = request.files.getlist("images")
+                for img in files[:5]:
+                    if img and img.filename != '':
+                        # Secure filename with ID to avoid conflicts
+                        original_name = secure_filename(img.filename)
+                        filename = f"prod_{new_id}_{original_name}"
+                        
+                        # Save the file
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        img.save(file_path)
+                        
+                        # List mein URL add karein
+                        image_list.append(f"/static/uploads/{filename}")
 
-        # Naya product add karein
-        products.append({
-            "id": new_id,
-            "title": title,
-            "price": price,
-            "description": desc,
-            "images": image_list,
-            "ratings": []
-        })
+            products.append({
+                "id": new_id,
+                "title": title,
+                "price": price,
+                "description": desc,
+                "images": image_list,
+                "ratings": []
+            })
 
-        save_products() # File mein permanent save
-        return redirect("/admin_dashboard")
+            save_products()
+            return redirect("/admin_dashboard")
+            
+        except Exception as e:
+            # Ye line aapko screen par batayegi ke asal masla kya hai
+            return f"<h2>Internal Error: {str(e)}</h2><a href='/add_product'>Try Again</a>"
 
     return """
     <html>
     <head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"></head>
-    <body class="container mt-5" style="background:#f8f9fa;">
-    <div class="card p-4 shadow">
-        <h2>➕ Add New Product</h2>
+    <body class="container mt-5">
+        <h2>Add Product</h2>
         <form method="post" enctype="multipart/form-data">
-            <input name="title" class="form-control mb-2" placeholder="Product Title" required>
-            <input name="price" type="number" class="form-control mb-2" placeholder="Price (PKR)" required>
-            <textarea name="description" class="form-control mb-2" placeholder="Product Description" required></textarea>
-            <label class="form-label">Select Images (Max 5)</label>
+            <input name="title" class="form-control mb-2" placeholder="Title" required>
+            <input name="price" type="number" class="form-control mb-2" placeholder="Price" required>
+            <textarea name="description" class="form-control mb-2" placeholder="Description"></textarea>
             <input type="file" name="images" multiple class="form-control mb-3">
-            <button class="btn btn-success w-100">Save Product</button>
+            <button class="btn btn-success w-100">Save</button>
         </form>
-        <a href="/admin_dashboard" class="btn btn-dark mt-2 w-100">Back</a>
-    </div>
     </body>
     </html>
     """
