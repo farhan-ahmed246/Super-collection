@@ -54,25 +54,34 @@ def save_products():
     with open(PRODUCTS_FILE, "w") as f:
         json.dump(products, f)
 # ---------------- EMAIL FUNCTION ----------------
+
 def send_email(subject, body):
+    # Credentials (Spaces khatam kar ke check karein)
+    user = GMAIL_USER
+    pw = GMAIL_APP_PASSWORD 
+    admin = ADMIN_EMAIL
+
     try:
-        # GMAIL_USER aur GMAIL_APP_PASSWORD ka sahi hona lazmi hai
+        # Email setup
         msg = MIMEText(body)
         msg["Subject"] = subject
-        msg["From"] = GMAIL_USER
-        msg["To"] = ADMIN_EMAIL
+        msg["From"] = user
+        msg["To"] = admin
         
-        # Timeout add kiya hai taake server hang na ho
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
-            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
-            server.send_message(msg)
-        print(f"✅ Email Sent: {subject}")
+        # SMTP Server Connection (Port 587 is more reliable for deployment)
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=15)
+        server.starttls()  # Connection ko secure banane ke liye
+        
+        server.login(user, pw)
+        server.send_message(msg)
+        server.quit()
+        
+        print(f"✅ Notification Sent: {subject}")
         return True
     except Exception as e:
-        # Agar email fail ho jaye to console mein error dikhay ga par app crash nahi hogi
-        print(f"❌ Email Error: {e}")
+        # Is se aapka server crash nahi hoga, bas terminal mein error dikhay ga
+        print(f"❌ Email Failed on Server: {e}")
         return False
-
 # ================= HOME =================
 # ================= HOME =================
 @app.route("/", methods=["GET"])
