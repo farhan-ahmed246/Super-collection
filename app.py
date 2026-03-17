@@ -126,6 +126,25 @@ a{text-decoration:none;color:white;}
         <div class="logo-text">SUPER COLLECTION</div>
     </div>
 
+<div class="mb-3 text-center">
+
+<a href="https://www.instagram.com/supercollection6547/" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon">
+</a>
+
+<a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon">
+</a>
+
+<a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank">
+<img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon">
+</a>
+
+<a href="https://wa.me/923363016943" target="_blank">
+<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon">
+</a>
+
+</div>
     <form method="get" action="/">
         <input type="text" name="search" value="{{ search_val }}" placeholder="🔍 Search Products..." class="form-control search-bar">
     </form>
