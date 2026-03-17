@@ -29,10 +29,19 @@ PRODUCTS_FILE = "products.json"
 order_history = []
 
 # ---------------- PRODUCTS DATA ----------------
-if os.path.exists(PRODUCTS_FILE):
-    with open(PRODUCTS_FILE, "r") as f:
-        products = json.load(f)
-else:
+def load_products():
+    if os.path.exists(PRODUCTS_FILE):
+        try:
+            with open(PRODUCTS_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+products = load_products()
+
+# Agar file khali hai toh sample bhar do
+if not products:
     products = [
         {"id": i, "title": f"Super Product {i}", "price": 2850,
          "description": "Premium Quality Product", "image": "", "images": [], "ratings": []}
@@ -44,7 +53,6 @@ else:
 def save_products():
     with open(PRODUCTS_FILE, "w") as f:
         json.dump(products, f)
-
 # ---------------- EMAIL FUNCTION ----------------
 def send_email(subject, body):
     try:
@@ -61,39 +69,18 @@ def send_email(subject, body):
 
 # ================= HOME =================
 # ================= HOME =================
-# ================= HOME =================
-from flask import render_template_string, request, session
-from datetime import datetime
-
 @app.route("/", methods=["GET"])
 def home():
     global products
-    
-    if os.path.exists(PRODUCTS_FILE):
-    with open(PRODUCTS_FILE, "r") as f:
-        products = json.load(f)
-else:
-    products = [
-        {"id": i, "title": f"Super Product {i}", "price": 2850,
-         "description": "Premium Quality Product", "image": "", "images": [], "ratings": []}
-        for i in range(1, 31)
-    ]
-    with open(PRODUCTS_FILE, "w") as f:
-        json.dump(products, f)
-
-def save_products():
-    with open(PRODUCTS_FILE, "w") as f:
-        json.dump(products, f)
+    products = load_products() # Refresh data from file
 
     search_query = request.args.get("search", "").strip().lower()
 
-    # 2. Filtering Logic
     if search_query:
         filtered = [p for p in products if search_query in p.get("title", "").lower()]
     else:
         filtered = products
 
-    # 3. Banner & Timestamp
     banner_url = "static/banner.jpg" if os.path.exists("static/banner.jpg") else "https://static.vecteezy.com/system/resources/previews/021/962/217/non_2x/ramadan-sale-banner-vector.jpg"
     timestamp = datetime.now().timestamp()
 
@@ -111,7 +98,7 @@ body{background:black;color:white;font-family:sans-serif;}
 .card{border:none;border-radius:15px;transition:0.3s;background:#111;color:white; height:100%; border: 1px solid #333;}
 .card:hover{transform:translateY(-5px);box-shadow:0 10px 25px rgba(0,198,255,0.3); border-color: #00c6ff;}
 .btn-cart{background:#ff6600;border:none;color:white;padding:12px;font-size:16px;margin-top:10px;border-radius:10px;cursor:pointer;width:100%; font-weight:bold;}
-.icon{width:45px;margin:0 10px;filter:invert(1);}
+.icon{width:40px;margin:0 10px;filter:invert(1);}
 .product-img{width:100%;height:250px;object-fit:contain;background:#000;border-radius:10px;}
 .search-bar{max-width:400px;margin:0 auto 20px;display:block; background:#222; color:white; border:1px solid #444; border-radius: 20px;}
 a{text-decoration:none;color:white;}
@@ -126,25 +113,11 @@ a{text-decoration:none;color:white;}
         <div class="logo-text">SUPER COLLECTION</div>
     </div>
 
-<div class="mb-3 text-center">
+    <div class="mb-4">
+        <a href="https://www.instagram.com/supercollection6547/" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon"></a>
+        <a href="https://wa.me/923363016943" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon"></a>
+    </div>
 
-<a href="https://www.instagram.com/supercollection6547/" target="_blank">
-<img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon">
-</a>
-
-<a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank">
-<img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon">
-</a>
-
-<a href="https://www.tiktok.com/@superr.collection?lang=en" target="_blank">
-<img src="https://cdn-icons-png.flaticon.com/512/3046/3046120.png" class="icon">
-</a>
-
-<a href="https://wa.me/923363016943" target="_blank">
-<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon">
-</a>
-
-</div>
     <form method="get" action="/">
         <input type="text" name="search" value="{{ search_val }}" placeholder="🔍 Search Products..." class="form-control search-bar">
     </form>
@@ -164,6 +137,7 @@ a{text-decoration:none;color:white;}
         <div class="card p-3">
             <a href="/product/{{p.id}}">
                 {% if p.images %}<img src="{{p.images[0]}}" class="product-img mb-2">
+                {% elif p.image %}<img src="{{p.image}}" class="product-img mb-2">
                 {% else %}<img src="https://via.placeholder.com/300x300?text=No+Image" class="product-img mb-2">{% endif %}
             </a>
             <h5 class="mt-2 text-center">{{p.title}}</h5>
