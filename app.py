@@ -66,18 +66,24 @@ from flask import render_template_string, request, session
 from datetime import datetime
 
 # ================= HOME ROUTE (UPDATED) =================
+# ================= HOME ROUTE (COMPLETE FIX) =================
 @app.route("/", methods=["GET"])
 def home():
-    # .strip() lagaya hai taake fuzool spaces masla na karein
-    search = request.args.get("search", "").strip().lower()
+    # User jo search karega woh yahan aayega
+    search_query = request.args.get("search", "").strip().lower()
     
-    # Logic: Agar search empty hai to sab dikhao, warna filter karo
-    if not search:
+    # AGAR SEARCH KHALI HAI: Toh saare products dikhao
+    # AGAR SEARCH MEIN KUCH HAI: Toh sirf matching products dikhao
+    if not search_query:
         filtered = products
     else:
-        filtered = [p for p in products if search in p.get("title", "").lower()]
+        filtered = [p for p in products if search_query in p.get("title", "").lower()]
 
-    banner_path = "static/banner.jpg" if os.path.exists("static/banner.jpg") else "https://static.vecteezy.com/system/resources/previews/021/962/217/non_2x/ramadan-sale-banner-vector.jpg"
+    # Banner check logic
+    banner_url = "static/banner.jpg" if os.path.exists("static/banner.jpg") else "https://static.vecteezy.com/system/resources/previews/021/962/217/non_2x/ramadan-sale-banner-vector.jpg"
+    
+    # Current time for cache busting (taake banner update foran nazar aaye)
+    timestamp = datetime.now().timestamp()
 
     html = """
 <html>
@@ -85,29 +91,26 @@ def home():
 <title>Super Collection</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-body{background:black;color:white;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
-.logo-box{text-align:center;margin-bottom:20px; padding-top: 20px;}
+body{background:black;color:white;font-family:sans-serif;}
+.logo-box{text-align:center;margin-bottom:20px; padding-top:20px;}
 .logo-sc{font-size:90px;font-weight:900;letter-spacing:5px;background:linear-gradient(45deg,#00c6ff,#ff00cc,#ff6600);-webkit-background-clip:text;-webkit-text-fill-color:transparent;position:relative;display:inline-block;}
-.logo-sc:after{content:"⚡";position:absolute;left:50%;transform:translateX(-50%);top:-10px;font-size:80px;color:#ffcc00;text-shadow:0 0 20px #ffcc00; opacity: 0.8;}
-.logo-text{font-size:32px;font-weight:700;margin-top:-10px;letter-spacing:3px; color: #eee;}
-.card{border:none;border-radius:15px;transition:0.4s;background:#111;color:white; overflow: hidden; border: 1px solid #222;}
-.card:hover{transform:translateY(-10px);box-shadow:0 15px 35px rgba(0,198,255,0.3); border-color: #00c6ff;}
-.btn-cart{background:linear-gradient(45deg, #ff6600, #ff9900);border:none;color:white;padding:12px;font-weight:bold;margin-top:10px;border-radius:10px;transition: 0.3s;}
-.btn-cart:hover{background:linear-gradient(45deg, #ff4400, #ff6600); transform: scale(1.02);}
-.icon{width:40px;margin:0 12px;filter:invert(1); transition: 0.3s;}
-.icon:hover{transform: scale(1.2); filter: invert(1) drop-shadow(0 0 5px #fff);}
-.product-img{width:100%;height:300px;object-fit:cover;background:#1a1a1a;border-radius:10px;}
-.search-bar{max-width:500px;margin:0 auto 30px; border-radius: 25px; background: #222; border: 1px solid #444; color: white; padding: 12px 25px;}
-.search-bar:focus{background: #333; color: white; border-color: #ff6600; box-shadow: none;}
+.logo-sc:after{content:"⚡";position:absolute;left:50%;transform:translateX(-50%);top:-10px;font-size:100px;color:#ffcc00;text-shadow:0 0 20px #ffcc00;}
+.logo-text{font-size:32px;font-weight:700;margin-top:-10px;letter-spacing:3px;}
+.card{border:none;border-radius:15px;transition:0.3s;background:#111;color:white; height:100%;}
+.card:hover{transform:scale(1.05);box-shadow:0 10px 25px rgba(0,198,255,0.3);}
+.btn-cart{background:#ff6600;border:none;color:white;padding:10px 20px;font-size:16px;margin-top:10px;border-radius:10px;cursor:pointer;width:100%; font-weight:bold;}
+.icon{width:45px;margin:0 10px;filter:invert(1);}
+.product-img{width:100%;height:300px;object-fit:contain;background:#000;border-radius:10px;}
+.search-bar{max-width:400px;margin:0 auto 20px;display:block; background:#222; color:white; border:1px solid #444;}
+.search-bar:focus{background:#333; color:white; border-color:#ff6600;}
 a{text-decoration:none;color:white;}
-.price-tag{font-size: 1.2rem; font-weight: bold; color: #00ffcc;}
 </style>
 </head>
 <body>
-<div class="container mt-2">
+<div class="container mt-4">
 
-<div class="d-flex justify-content-end">
-<a href="/admin" class="btn btn-outline-warning btn-sm" style="border-radius: 20px;">Admin Access</a>
+<div class="d-flex justify-content-end mb-2">
+<a href="/admin" class="btn btn-warning btn-sm">Admin Login</a>
 </div>
 
 <div class="logo-box">
@@ -115,7 +118,7 @@ a{text-decoration:none;color:white;}
 <div class="logo-text">SUPER COLLECTION</div>
 </div>
 
-<div class="mb-4 text-center">
+<div class="mb-3 text-center">
 <a href="https://wa.me/923363016943" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon"></a>
 <a href="https://www.instagram.com/supercollection6547/" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" class="icon"></a>
 <a href="https://www.facebook.com/profile.php?id=61587780675415" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" class="icon"></a>
@@ -123,65 +126,57 @@ a{text-decoration:none;color:white;}
 </div>
 
 <form method="get" class="mt-3">
-<input type="text" name="search" value="{{ search_query }}" placeholder="🔍 Search what you're looking for..." class="form-control search-bar">
+<input type="text" name="search" value="{{ search_val }}" placeholder="🔍 Search Products" class="form-control search-bar">
 </form>
 
-<div class="text-center">
-<img src="{{ banner_url }}?v={{ timestamp }}" class="img-fluid mb-5" style="border-radius:20px; max-height: 400px; width: 100%; object-fit: cover; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-</div>
+<img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-4" style="width:100%;height:auto;border-radius:20px; max-height:400px; object-fit:cover;">
 
 {% if not filtered %}
 <div class="text-center py-5">
-<h1 style="font-size: 50px;">☹️</h1>
-<h3 class="mt-2">Opps! No Products Found</h3>
-<p class="text-muted">Try searching for something else or browse all products.</p>
-<a href="/" class="btn btn-primary">Show All Products</a>
+    <h3 class="text-danger">Product Not Available ❌</h3>
+    <p>Humare pas is naam ka koi product nahi hai.</p>
+    <a href="/" class="btn btn-outline-light">Back to Shop</a>
 </div>
 {% endif %}
 
-<div class="row">
+<div class="row mt-4">
 {% for p in filtered %}
-<div class="col-lg-4 col-md-6 mb-4">
-<div class="card p-3 h-100">
-<a href="/product/{{p.id}}">
-    {% if p.images %}
-    <img src="{{p.images[0]}}" class="product-img mb-2" alt="Product">
-    {% elif p.image %}
-    <img src="{{p.image}}" class="product-img mb-2" alt="Product">
-    {% else %}
-    <img src="https://via.placeholder.com/300x300?text=No+Image" class="product-img mb-2">
-    {% endif %}
-</a>
-<div class="card-body d-flex flex-column p-0">
-    <h5 class="mt-2"><a href="/product/{{p.id}}">{{p.title}}</a></h5>
-    <p class="text-muted small">{{p.description[:60]}}...</p>
-    <div class="mt-auto">
-        <div class="price-tag mb-2">PKR {{p.price}}</div>
+<div class="col-md-4 mb-4">
+    <div class="card p-3 text-center">
+        <a href="/product/{{p.id}}">
+            {% if p.images %}
+            <img src="{{p.images[0]}}" class="product-img mb-2">
+            {% elif p.image %}
+            <img src="{{p.image}}" class="product-img mb-2">
+            {% else %}
+            <img src="https://via.placeholder.com/300x300?text=No+Image" class="product-img mb-2">
+            {% endif %}
+        </a>
+        <h5><a href="/product/{{p.id}}">{{p.title}}</a></h5>
+        <p class="text-muted small">{{p.description[:50]}}...</p>
+        <h6 class="text-warning">PKR {{p.price}}</h6>
+
         <form action="/add_to_cart/{{p.id}}" method="get">
             <input type="hidden" name="quantity" value="1">
             <input type="hidden" name="size" value="N/A">
-            <button class="btn-cart w-100">Quick Buy</button>
+            <button class="btn-cart">Add To Cart</button>
         </form>
     </div>
-</div>
-</div>
 </div>
 {% endfor %}
 </div>
 
-<footer class="text-center mt-5 mb-4 text-muted">
-<small>&copy; 2026 Super Collection - All Rights Reserved</small>
-</footer>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 """
     return render_template_string(
         html,
         filtered=filtered,
-        banner_url=banner_path,
-        timestamp=datetime.now().timestamp(),
-        search_query=search
+        banner_url=banner_url,
+        timestamp=timestamp,
+        search_val=search_query
     )
 
 # ================= SIMPLE CHECKOUT =================
