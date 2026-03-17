@@ -64,31 +64,25 @@ def save_products():
     with open(PRODUCTS_FILE, "w") as f:
         json.dump(products, f)
 # ---------------- EMAIL FUNCTION ----------------
-def send_email(subject, body):
-    # Inhe check karein ke ye khali to nahi aa rahay
-    user = GMAIL_USER.strip() if GMAIL_USER else "fmukhtar420@gmail.com"
-    pw = GMAIL_APP_PASSWORD.strip() if GMAIL_APP_PASSWORD else "qkbhaxwvpbcodjgy"
-    admin = ADMIN_EMAIL.strip() if ADMIN_EMAIL else "fmukhtar420@gmail.com"
 
+def send_notification(subject, body):
     try:
         msg = MIMEText(body)
         msg["Subject"] = subject
-        msg["From"] = user
-        msg["To"] = admin
+        msg["From"] = GMAIL_USER
+        msg["To"] = ADMIN_EMAIL
         
-        # Timeout barha diya hai
+        # Timeout 30 seconds rakha hai deploy server ke liye
         server = smtplib.SMTP("smtp.gmail.com", 587, timeout=30)
-        server.starttls() 
-        server.login(user, pw)
+        server.starttls()
+        server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
         server.send_message(msg)
         server.quit()
-        print("✅ Success: Email Sent!")
+        print("✅ Notification Sent Successfully!")
         return True
-    except smtplib.SMTPAuthenticationError:
-        print("❌ Error: App Password ya Email galat hai.")
     except Exception as e:
-        print(f"❌ Error: {str(e)}")
-    return False
+        print(f"❌ Notification Failed: {str(e)}")
+        return False
 
 # ================= HOME =================
 # ================= HOME =================
