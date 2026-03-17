@@ -56,16 +56,22 @@ def save_products():
 # ---------------- EMAIL FUNCTION ----------------
 def send_email(subject, body):
     try:
+        # GMAIL_USER aur GMAIL_APP_PASSWORD ka sahi hona lazmi hai
         msg = MIMEText(body)
         msg["Subject"] = subject
         msg["From"] = GMAIL_USER
         msg["To"] = ADMIN_EMAIL
-        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
-        server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
-        server.send_message(msg)
-        server.quit()
+        
+        # Timeout add kiya hai taake server hang na ho
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
+            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+            server.send_message(msg)
+        print(f"✅ Email Sent: {subject}")
+        return True
     except Exception as e:
-        print("Email Error:", e)
+        # Agar email fail ho jaye to console mein error dikhay ga par app crash nahi hogi
+        print(f"❌ Email Error: {e}")
+        return False
 
 # ================= HOME =================
 # ================= HOME =================
