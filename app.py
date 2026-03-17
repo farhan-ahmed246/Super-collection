@@ -564,22 +564,27 @@ def add_product():
         return redirect("/admin")
 
     if request.method == "POST":
+        # Global list ko refresh karein
+        global products
+        products = load_products()
+
         new_id = max([p["id"] for p in products]) + 1 if products else 1
         title = request.form["title"]
         price = int(request.form["price"])
         desc = request.form["description"]
 
         image_list = []
-
         if "images" in request.files:
             files = request.files.getlist("images")
-            for img in files[:5]:   # max 5 images
+            for img in files[:5]:
                 if img and img.filename:
-                    filename = secure_filename(img.filename)
+                    # Unique filename banayein taake image delete na ho ya overwrite na ho
+                    filename = secure_filename(f"{new_id}_{img.filename}")
                     path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
                     img.save(path)
                     image_list.append(url_for('static', filename='uploads/' + filename))
 
+        # Naya product add karein
         products.append({
             "id": new_id,
             "title": title,
@@ -589,33 +594,37 @@ def add_product():
             "ratings": []
         })
 
-        save_products()
+        save_products() # File mein permanent save
         return redirect("/admin_dashboard")
 
     return """
     <html>
-    <body class="container mt-5">
-    <h2>Add Product (Max 5 Images)</h2>
-    <form method="post" enctype="multipart/form-data">
-        <input name="title" class="form-control mb-2" placeholder="Title" required>
-        <input name="price" type="number" class="form-control mb-2" placeholder="Price" required>
-        <textarea name="description" class="form-control mb-2" placeholder="Description" required></textarea>
-
-        <label>Select 1 to 5 Images</label>
-        <input type="file" name="images" multiple class="form-control mb-3">
-
-        <button class="btn btn-success w-100">Add Product</button>
-    </form>
+    <head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+    <body class="container mt-5" style="background:#f8f9fa;">
+    <div class="card p-4 shadow">
+        <h2>➕ Add New Product</h2>
+        <form method="post" enctype="multipart/form-data">
+            <input name="title" class="form-control mb-2" placeholder="Product Title" required>
+            <input name="price" type="number" class="form-control mb-2" placeholder="Price (PKR)" required>
+            <textarea name="description" class="form-control mb-2" placeholder="Product Description" required></textarea>
+            <label class="form-label">Select Images (Max 5)</label>
+            <input type="file" name="images" multiple class="form-control mb-3">
+            <button class="btn btn-success w-100">Save Product</button>
+        </form>
+        <a href="/admin_dashboard" class="btn btn-dark mt-2 w-100">Back</a>
+    </div>
     </body>
     </html>
-"""
-
+    """
 # ================= EDIT PRODUCT =================
 @app.route("/edit/<int:pid>", methods=["GET","POST"])
 def edit_product(pid):
     if not session.get("admin"):
         return redirect("/admin")
 
+    global products
+    products = load_products()
+    
     product = next((p for p in products if p["id"] == pid), None)
     if not product:
         return "Product not found ❌"
@@ -626,63 +635,57 @@ def edit_product(pid):
     if request.method == "POST":
         product["title"] = request.form["title"]
         product["description"] = request.form["description"]
+        product["price"] = int(request.form["price"]) # Price update added
 
-        # Add new images (max total 5)
-        files = request.files.getlist("images")
-        for img in files:
-            if img and img.filename and len(product["images"]) < 5:
-                filename = secure_filename(img.filename)
-                path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                img.save(path)
-                product["images"].append(
-                    url_for('static', filename='uploads/' + filename)
-                )
+        # Nayi images add karein agar total 5 se kam hain
+        if "images" in request.files:
+            files = request.files.getlist("images")
+            for img in files:
+                if img and img.filename and len(product["images"]) < 5:
+                    filename = secure_filename(f"edit_{pid}_{img.filename}")
+                    path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+                    img.save(path)
+                    product["images"].append(url_for('static', filename='uploads/' + filename))
 
-        save_products()
+        save_products() # Changes ko file mein save karein
         return redirect("/edit/" + str(pid))
 
-    # Image preview section with delete button
+    # Image preview ka HTML logic
     image_html = ""
     for img in product["images"]:
         image_html += f"""
         <div style="position:relative;display:inline-block;margin:10px;">
-            <img src="{img}" width="150" height="150"
-                 style="object-fit:cover;border-radius:10px;">
-            <a href="/delete_image/{pid}?img={img}"
-               style="position:absolute;top:-8px;right:-8px;
-                      background:red;color:white;
-                      border-radius:50%;padding:4px 8px;
-                      text-decoration:none;font-weight:bold;">
-               ✖
-            </a>
+            <img src="{img}" width="120" height="120" style="object-fit:cover;border-radius:10px;border:1px solid #ddd;">
+            <a href="/delete_image/{pid}?img={img}" style="position:absolute;top:-5px;right:-5px;background:red;color:white;border-radius:50%;padding:2px 6px;text-decoration:none;font-size:12px;">✖</a>
         </div>
         """
 
     return f"""
     <html>
+    <head><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"></head>
     <body class="container mt-5">
-    <h2>Edit Product (Max 5 Images)</h2>
-
-    <form method="post" enctype="multipart/form-data">
-        <input name="title" value="{product['title']}" class="form-control mb-2">
-
-        <textarea name="description" class="form-control mb-3">{product['description']}</textarea>
-
-        <label>Add Images (Max 5 total)</label>
-        <input type="file" name="images" multiple class="form-control mb-3">
-
-        <button class="btn btn-warning w-100">Update</button>
-    </form>
-
-    <hr>
-    <h4>Uploaded Images</h4>
-    {image_html}
-
-    <br><br>
-    <a href="/admin_dashboard" class="btn btn-dark">Back</a>
+    <div class="card p-4">
+        <h2>⚙️ Edit Product</h2>
+        <form method="post" enctype="multipart/form-data">
+            <label>Title</label>
+            <input name="title" value="{product['title']}" class="form-control mb-2">
+            <label>Price (PKR)</label>
+            <input name="price" type="number" value="{product['price']}" class="form-control mb-2">
+            <label>Description</label>
+            <textarea name="description" class="form-control mb-3" rows="4">{product['description']}</textarea>
+            <label>Add More Images (Total Max 5)</label>
+            <input type="file" name="images" multiple class="form-control mb-3">
+            <button class="btn btn-warning w-100 font-weight-bold">Update Product Details</button>
+        </form>
+        <hr>
+        <h4>Current Images</h4>
+        {image_html if image_html else '<p>No images uploaded.</p>'}
+        <br>
+        <a href="/admin_dashboard" class="btn btn-dark w-100">Back to Dashboard</a>
+    </div>
     </body>
     </html>
-"""
+    """
 
 
 #================== DELETE IMAGE =================
