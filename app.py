@@ -131,11 +131,11 @@ a{text-decoration:none;color:white;}
 <input type="text" name="search" placeholder="🔍 Search Products" class="form-control search-bar">
 </form>
 
+<!-- BANNER -->
 <img src="{{ banner_url }}?v={{ timestamp }}" class="d-block mx-auto mb-4" style="width:100%;height:auto;border-radius:20px;">
 
-{# --- Yahan Tabdeeli Karein --- #}
-{% if search_query and not filtered %}
-    <h3 class="mt-4 text-center text-danger">"{{ search_query }}" Not Available ❌</h3>
+{% if not filtered %}
+<h3 class="mt-4 text-center">Not Available ❌</h3>
 {% endif %}
 
 <div class="row mt-4">
@@ -163,13 +163,12 @@ a{text-decoration:none;color:white;}
 </body>
 </html>
 """
-   return render_template_string(
-    html,
-    filtered=filtered,
-    banner_url=banner_path,
-    timestamp=datetime.now().timestamp(),
-    search_query=search  # <--- Ye line add karein
-)
+    return render_template_string(
+        html,
+        filtered=filtered,
+        banner_url=banner_path,
+        timestamp=datetime.now().timestamp()
+    )
 # ================= SIMPLE CHECKOUT =================
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
@@ -322,12 +321,15 @@ def admin():
 
             session["admin"] = True
 
-            # Is line ko delete ya comment kar dein:
-            # send_email("Admin Login Alert", f"Admin logged in at {datetime.now()}")
+            send_email(
+                "Admin Login Alert - Super Collection",
+                f"Admin logged in at {datetime.now()}"
+            )
 
             return redirect("/admin_dashboard")
         else:
             error = "Invalid Credentials ❌"
+
     return f"""
 <html>
 <head>
