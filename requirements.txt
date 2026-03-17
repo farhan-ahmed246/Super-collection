@@ -5,3 +5,4 @@ google-auth
 google-auth-oauthlib
 Flask==2.3.2
 waitress==2.1.2
+cloudinary
