@@ -69,17 +69,21 @@ from datetime import datetime
 def home():
     global products
     
-    # 1. Check karein agar products khali hain to sample data load karein
-    if not products or len(products) == 0:
-        products = [
-            {"id": i, "title": f"Super Product {i}", "price": 2500 + (i*10),
-             "description": "Premium Quality Product from Super Collection", 
-             "images": [], "image": "", "ratings": []}
-            for i in range(1, 11) # Sirf 10 sample products filhaal
-        ]
-        # File mein bhi save kar dein taake [] khatam ho jaye
-        with open(PRODUCTS_FILE, "w") as f:
-            json.dump(products, f)
+    if os.path.exists(PRODUCTS_FILE):
+    with open(PRODUCTS_FILE, "r") as f:
+        products = json.load(f)
+else:
+    products = [
+        {"id": i, "title": f"Super Product {i}", "price": 2850,
+         "description": "Premium Quality Product", "image": "", "images": [], "ratings": []}
+        for i in range(1, 31)
+    ]
+    with open(PRODUCTS_FILE, "w") as f:
+        json.dump(products, f)
+
+def save_products():
+    with open(PRODUCTS_FILE, "w") as f:
+        json.dump(products, f)
 
     search_query = request.args.get("search", "").strip().lower()
 
